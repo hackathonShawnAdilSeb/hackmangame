@@ -2,151 +2,118 @@
 import pygame
 import sys
 import os 
-import random
 
-# Ensure the working directory is the script's directory
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-# Initialize all imported pygame modules
+# initialize all imported pygame modules
 pygame.init()
 
-# Define game variables
+
+
+# define game variables
 player_size = 50
 enemy_size = 50
 player_speed = 3
 width = 800
 height = 600
 
-# Initialize the font variable for the game
+# initialize the font variable for the game
 font = pygame.font.Font(None, 36)
 
-# Initialize screen display with width and height 
+# initialize screen display with width and height 
 screen = pygame.display.set_mode((width, height))
 
-# Set the current screen caption
+# set the current screen caption
 pygame.display.set_caption('Collision Detection Example')
-
-# Load the player image
+# load the player image
 player_image = pygame.image.load(os.path.join('ninja.png')).convert_alpha()
-# Scale the player image to the desired size
+# scale the player image to the desired size
 player_image = pygame.transform.scale(player_image, (player_size, player_size))
 
 # Get the rectangle for the player image
 player_rect = player_image.get_rect()
-
-# Define player's initial position at the center of the screen
+# define player's x-coordinate for initial position
 player_x = width // 2
+# define player's y-coordinate for initial position
 player_y = height // 2
 
- #Enemy Class 
-class Enemy:
-    def __init__(self):
-        # Randomly select enemy's starting edge (top, bottom, left, right)
-        edge = random.choice(['top', 'bottom', 'left', 'right'])
-        
-        # Set initial enemy position based on the selected edge
-        if edge == 'top':
-            self.rect = pygame.Rect(random.randint(0, width - enemy_size), 0, enemy_size, enemy_size)
-        elif edge == 'bottom':
-            self.rect = pygame.Rect(random.randint(0, width - enemy_size), height - enemy_size, enemy_size, enemy_size)
-        elif edge == 'left':
-            self.rect = pygame.Rect(0, random.randint(0, height - enemy_size), enemy_size, enemy_size)
-        else:  # right
-            self.rect = pygame.Rect(width - enemy_size, random.randint(0, height - enemy_size), enemy_size, enemy_size)
-        
-        # Define the speed for the enemy
-        self.speed = 1
+class enemy:
+    global enemy_x
+    global enemy_y
+# define enemy's x-coordinate for initial position
+    enemy_x = 2
+# define enemy's y-coordinate for initial position
+    enemy_y = 300
+    enemy_speed = 2
 
-    # Move the enemy towards the player
-    def move_towards_player(self, player_rect):
-        # Calculate the direction vector towards the player
-        direction = pygame.Vector2(player_rect.center) - pygame.Vector2(self.rect.center)
-        if direction.length() != 0:
-            direction = direction.normalize()  # Normalize direction vector for consistent speed
-        # Update the enemy's position to move towards the player
-        self.rect.x += direction.x * self.speed
-        self.rect.y += direction.y * self.speed
-
-    # Draw the enemy on the screen
-    def draw(self, screen):
-        pygame.draw.rect(screen, (0, 0, 255), self.rect)  # Draw enemy as a blue rectangle
-
-
-### Game Setup ###
-
-# Create an object to help track time (FPS control)
+# create an object to help track time
 clock = pygame.time.Clock()
-
-# Flag to control the main game loop
 running = True
-
-# Instantiate an enemy object (can add more enemies as needed)
-enemy = Enemy()
-
-# Function to update player movement based on WASD keys
 def update_player_movement():
     global player_x
     global player_y
-    # Get the state of all keyboard buttons
+    # get the state of all keyboard buttons
     keys = pygame.key.get_pressed()
-    
-    # Update player's x and y coordinates based on key presses
-    if keys[pygame.K_a]:  # Move left (A)
+    if keys[pygame.K_a]:
         player_x -= player_speed
-    if keys[pygame.K_d]:  # Move right (D)
+    # increment player's x-coordinate based on num times right arrow key pressed
+    if keys[pygame.K_d]:
         player_x += player_speed
-    if keys[pygame.K_w]:  # Move up (W)
+    # decrement player's y-coordinate based on num times up arrow key pressed
+    if keys[pygame.K_w]:
         player_y -= player_speed
-    if keys[pygame.K_s]:  # Move down (S)
+    # increment player's y-coordinate based on num times down arrow key pressed
+    if keys[pygame.K_s]:
         player_y += player_speed
-    
-    # Ensure player's position stays within screen boundaries
+    # ensure player's x-coordinate stays within screen dimension
     player_x = max(0, min(width - player_size, player_x))
+    # ensure player's y-coordinate stays within screen dimension
     player_y = max(0, min(height - player_size, player_y))
 
-    # Update and return the player's rectangle for further processing (like collision detection)
+    # create a rectangle positioned at (player_x, player_y) with a width and height of PLAYER_SIZE
     return pygame.Rect(player_x, player_y, player_size, player_size)
 
 
-### Main Game Loop ###
+
 while running:
-    # Event handling
+  # iterate through each event in the game's event queue
     for event in pygame.event.get():
-        # Quit the game if the user closes the window
+      # if an event is of type "QUIT", set game as no longer running
         if event.type == pygame.QUIT:
             running = False
-
-    # Update player position based on movement input
-    player_rect = update_player_movement()
+    player_rect=update_player_movement()
+   
     
-    # Move the enemy towards the player
-    enemy.move_towards_player(player_rect)
 
-    # Check for collision between player and enemy
-    collision = player_rect.colliderect(enemy.rect)
+    
+    # create a rectangle positioned at (enemy_x, enemy_y) with a width and height of ENEMY_SIZE
+    enemy_rect = pygame.Rect(enemy_x, enemy_y, enemy_size, enemy_size)
 
-    # Fill the background with black
+    # check if player's rectangle intersects with enemy's rectangle (indicating a collision)
+    collision = player_rect.colliderect(enemy_rect)
+
+    # set background color 
     screen.fill((0, 0, 0))
 
-    # Draw the player on the screen
+    # draw the player rectangle on the screen 
+    #pygame.draw.rect(screen, (255, 0, 0), player_rect)
     screen.blit(player_image, player_rect)
+    # draw the enemy rectangle on the screen
+    pygame.draw.rect(screen, (0, 0, 255), enemy_rect)
 
-    # Draw the enemy on the screen
-    enemy.draw(screen)
-
-    # If a collision occurs, display a message on the screen
+    # display collision message if the player and enemy rectangles intersect/overlap
     if collision:
         text = font.render('Collision Occurred!', True, (255, 255, 255))
         screen.blit(text, (10, 10))
 
-    # Update the display
+    # update the screen display
     pygame.display.flip()
 
-    # Cap the frame rate to 60 frames per second
+    # set limit on num of frames per second that game will render (cap the frame rate)
     clock.tick(60)
 
-# Quit the game
+# quit Pygame
 pygame.quit()
 sys.exit()
