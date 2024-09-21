@@ -40,10 +40,14 @@ player_x = width // 2
 # define player's y-coordinate for initial position
 player_y = height // 2
 
+class enemy:
+    global enemy_x
+    global enemy_y
 # define enemy's x-coordinate for initial position
-enemy_x = 300
+    enemy_x = 2
 # define enemy's y-coordinate for initial position
-enemy_y = 300
+    enemy_y = 300
+    enemy_speed = 25
 
 # create an object to help track time
 clock = pygame.time.Clock()
