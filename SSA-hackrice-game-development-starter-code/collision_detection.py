@@ -1,6 +1,11 @@
 # import necessary modules
 import pygame
 import sys
+import os 
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
 
 # initialize all imported pygame modules
 pygame.init()
@@ -22,7 +27,14 @@ screen = pygame.display.set_mode((width, height))
 
 # set the current screen caption
 pygame.display.set_caption('Collision Detection Example')
+# load the player image
+player_image = pygame.image.load(os.path.join('ninja.png')).convert_alpha()
 
+# scale the player image to the desired size
+player_image = pygame.transform.scale(player_image, (player_size, player_size))
+
+# Get the rectangle for the player image
+player_rect = player_image.get_rect()
 # define player's x-coordinate for initial position
 player_x = width // 2
 # define player's y-coordinate for initial position
@@ -83,8 +95,8 @@ while running:
     screen.fill((0, 0, 0))
 
     # draw the player rectangle on the screen 
-    pygame.draw.rect(screen, (255, 0, 0), player_rect)
-
+    #pygame.draw.rect(screen, (255, 0, 0), player_rect)
+    screen.blit(player_image, player_rect)
     # draw the enemy rectangle on the screen
     pygame.draw.rect(screen, (0, 0, 255), enemy_rect)
 
