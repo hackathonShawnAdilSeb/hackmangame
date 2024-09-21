@@ -40,7 +40,7 @@ player_rect = player_image.get_rect()
 player_x = width // 2
 player_y = height // 2
 
- #Enemy Class 
+# Enemy Class to handle enemies ###
 class Enemy:
     def __init__(self):
         # Randomly select enemy's starting edge (top, bottom, left, right)
@@ -57,7 +57,7 @@ class Enemy:
             self.rect = pygame.Rect(width - enemy_size, random.randint(0, height - enemy_size), enemy_size, enemy_size)
         
         # Define the speed for the enemy
-        self.speed = 1
+        self.speed = 1.5
 
     # Move the enemy towards the player
     def move_towards_player(self, player_rect):
@@ -74,7 +74,7 @@ class Enemy:
         pygame.draw.rect(screen, (0, 0, 255), self.rect)  # Draw enemy as a blue rectangle
 
 
-### Game Setup ###
+#
 
 # Create an object to help track time (FPS control)
 clock = pygame.time.Clock()
