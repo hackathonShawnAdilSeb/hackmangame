@@ -40,6 +40,16 @@ player_rect = player_image.get_rect()
 player_x = width // 2
 player_y = height // 2
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image=pygame.image.load(os.path.join('bullet.png')).convert_alpha()
+        self.rect= self.image.get_rect()
+        self.rect.center=[x,y]
+    def update(self):
+        self.rect.y-=5
+
+bullet_group=pygame.sprite.Group()
 # Enemy Class to handle enemies ###
 class Enemy:
     def __init__(self):
@@ -101,6 +111,9 @@ def update_player_movement():
         player_y -= player_speed
     if keys[pygame.K_s]:  # Move down (S)
         player_y += player_speed
+    if keys[pygame.K_SPACE]:
+        bullet= Bullet(player_x, player_y)
+        bullet_group.add(bullet)
     
     # Ensure player's position stays within screen boundaries
     player_x = max(0, min(width - player_size, player_x))
@@ -125,7 +138,13 @@ while running:
     enemy.move_towards_player(player_rect)
 
     # Check for collision between player and enemy
-    collision = player_rect.colliderect(enemy.rect)
+    collision1 = player_rect.colliderect(enemy.rect)
+
+    #update bullet
+    bullet_group.update()
+    #draw bullet sprite group
+    bullet_group.draw(screen)   
+
 
     # Fill the background with black
     screen.fill((0, 0, 0))
@@ -137,7 +156,7 @@ while running:
     enemy.draw(screen)
 
     # If a collision occurs, display a message on the screen
-    if collision:
+    if collision1:
         text = font.render('Collision Occurred!', True, (255, 255, 255))
         screen.blit(text, (10, 10))
 
