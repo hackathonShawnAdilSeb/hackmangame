@@ -22,7 +22,7 @@ pygame.display.set_caption("Importing an image for the player component")
 clock = pygame.time.Clock()
 
 # load the player image
-player_image = pygame.image.load('player_image.png').convert_alpha()
+player_image = pygame.image.load('hackman.png').convert_alpha()
 
 # scale the player image to the desired size
 player_image = pygame.transform.scale(player_image, (player_width, player_height))
