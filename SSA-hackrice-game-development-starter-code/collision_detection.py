@@ -15,7 +15,7 @@ pygame.init()
 # define game variables
 player_size = 50
 enemy_size = 50
-player_speed = 5
+player_speed = 3
 width = 800
 height = 600
 
@@ -47,7 +47,7 @@ class enemy:
     enemy_x = 2
 # define enemy's y-coordinate for initial position
     enemy_y = 300
-    enemy_speed = 25
+    enemy_speed = 2
 
 # create an object to help track time
 clock = pygame.time.Clock()
