@@ -8,7 +8,7 @@ pygame.init()
 screen = pygame.display.set_mode((800, 600))
 
 # set the current screen caption
-pygame.display.set_caption('Game Loop Example')
+pygame.display.set_caption('Shawn Seb Adil Game')
 
 # create an object to help track time
 clock = pygame.time.Clock()
