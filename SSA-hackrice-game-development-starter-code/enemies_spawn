@@ -30,16 +30,16 @@ pygame.display.set_caption('Collision Detection Example')
 
 # Load the player image
 player_image = pygame.image.load(os.path.join('ninja.png')).convert_alpha()
-enemy_image = pygame.image.load(os.path.join('enemy.png')).convert_alpha()
 # Scale the player image to the desired size
 player_image = pygame.transform.scale(player_image, (player_size, player_size))
-enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
+
 # Get the rectangle for the player image
 player_rect = player_image.get_rect()
-enemy_rect = enemy_image.get_rect()
+
 # Define player's initial position at the center of the screen
 player_x = width // 2
 player_y = height // 2
+
 
 
 # Enemy Class to handle enemies ###
@@ -73,8 +73,7 @@ class Enemy:
 
     # Draw the enemy on the screen
     def draw(self, screen):
-        # Ensure the enemy is within the visible area
-        screen.blit(enemy_image, self.rect)
+        pygame.draw.rect(screen, (0, 0, 255), self.rect)  # Draw enemy as a blue rectangle
 
 
 #
@@ -104,7 +103,7 @@ def update_player_movement():
         player_y -= player_speed
     if keys[pygame.K_s]:  # Move down (S)
         player_y += player_speed
-    
+   
     # Ensure player's position stays within screen boundaries
     player_x = max(0, min(width - player_size, player_x))
     player_y = max(0, min(height - player_size, player_y))
@@ -128,7 +127,9 @@ while running:
     enemy.move_towards_player(player_rect)
 
     # Check for collision between player and enemy
-    collision = player_rect.colliderect(enemy.rect)
+    collision1 = player_rect.colliderect(enemy.rect)
+
+  
 
     # Fill the background with black
     screen.fill((0, 0, 0))
@@ -136,9 +137,11 @@ while running:
     # Draw the player on the screen
     screen.blit(player_image, player_rect)
 
+    # Draw the enemy on the screen
     enemy.draw(screen)
+
     # If a collision occurs, display a message on the screen
-    if collision:
+    if collision1:
         text = font.render('Collision Occurred!', True, (255, 255, 255))
         screen.blit(text, (10, 10))
 
