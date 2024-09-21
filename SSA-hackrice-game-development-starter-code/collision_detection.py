@@ -5,6 +5,8 @@ import sys
 # initialize all imported pygame modules
 pygame.init()
 
+
+
 # define game variables
 player_size = 50
 enemy_size = 50
@@ -34,18 +36,11 @@ enemy_y = 300
 # create an object to help track time
 clock = pygame.time.Clock()
 running = True
-
-while running:
-  # iterate through each event in the game's event queue
-    for event in pygame.event.get():
-      # if an event is of type "QUIT", set game as no longer running
-        if event.type == pygame.QUIT:
-            running = False
-
+def update_player_movement():
+    global player_x
+    global player_y
     # get the state of all keyboard buttons
     keys = pygame.key.get_pressed()
-
-    # decrement player's x-coordinate based on num times left arrow key pressed
     if keys[pygame.K_LEFT]:
         player_x -= player_speed
     # increment player's x-coordinate based on num times right arrow key pressed
@@ -57,14 +52,27 @@ while running:
     # increment player's y-coordinate based on num times down arrow key pressed
     if keys[pygame.K_DOWN]:
         player_y += player_speed
-
     # ensure player's x-coordinate stays within screen dimension
     player_x = max(0, min(width - player_size, player_x))
     # ensure player's y-coordinate stays within screen dimension
     player_y = max(0, min(height - player_size, player_y))
 
     # create a rectangle positioned at (player_x, player_y) with a width and height of PLAYER_SIZE
-    player_rect = pygame.Rect(player_x, player_y, player_size, player_size)
+    return pygame.Rect(player_x, player_y, player_size, player_size)
+
+
+
+while running:
+  # iterate through each event in the game's event queue
+    for event in pygame.event.get():
+      # if an event is of type "QUIT", set game as no longer running
+        if event.type == pygame.QUIT:
+            running = False
+    player_rect=update_player_movement()
+   
+    
+
+    
     # create a rectangle positioned at (enemy_x, enemy_y) with a width and height of ENEMY_SIZE
     enemy_rect = pygame.Rect(enemy_x, enemy_y, enemy_size, enemy_size)
 
