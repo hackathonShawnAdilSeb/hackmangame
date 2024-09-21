@@ -29,6 +29,7 @@ screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption('Collision Detection Example')
 # load the player image
 player_image = pygame.image.load(os.path.join('ninja.png')).convert_alpha()
+
 # scale the player image to the desired size
 player_image = pygame.transform.scale(player_image, (player_size, player_size))
 
