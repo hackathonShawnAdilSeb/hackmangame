@@ -29,7 +29,6 @@ bullet_y = 0
 bulletx_change = 10
 bullety_change = 0
 bullet_state = "ready"
-bullet_dir = "neutral"
 
 # Initialize the font variable for the game
 font = pygame.font.Font(None, 36)
@@ -102,11 +101,10 @@ mud_image = pygame.image.load(os.path.join('mud3.png')).convert_alpha()
 mud_mask = pygame.mask.from_surface(mud_image)
 mud_rect = mud_image.get_rect(topleft=(200, 300))
 
-def create_player_mask(player_rect):
-    player_surface = pygame.Surface((player_hitbox_size, player_hitbox_size), pygame.SRCALPHA)
-    # Blit the player's image onto the surface
-    player_surface.blit(player_image, (0, 0), player_rect)
-    # Create and return the mask from the player's surface
+def create_player_mask(player_image, player_size, player_x, player_y):
+
+    player_surface = pygame.Surface((player_size, player_size), pygame.SRCALPHA)
+    player_surface.blit(player_image, (0, 0))
     return pygame.mask.from_surface(player_surface)
 
 
@@ -115,6 +113,10 @@ def draw_text(text, font, color, surface, x, y):
     text_obj = font.render(text, True, color)
     text_rect = text_obj.get_rect(center=(x, y))
     surface.blit(text_obj, text_rect)
+
+player_x = width // 2
+player_y = height // 2
+
 
 def main_menu():
    
@@ -237,18 +239,23 @@ clock = pygame.time.Clock()
 running = True
 
 # Instantiate an enemy object (can add more enemies as needed)
-num_of_enemies = 5
+num_of_enemies = 0
 spawncamp=[]
 for i in range(num_of_enemies):
     spawncamp.append(Enemy())
 
 hitbox_reduction = 75  # This will reduce 10 pixels from both width and height
 player_hitbox_size = player_size - hitbox_reduction
+player_hitbox = pygame.Rect(
+    player_x + hitbox_reduction // 2,
+    player_y + hitbox_reduction // 2,
+    player_hitbox_size,
+    player_hitbox_size
+)
 
 def fire_bullet(x,y):
-    global bullet_state,bullet_dir, bullet_x, bullet_y
+    global bullet_state, bullet_x, bullet_y
     bullet_state="fire"
-    bullet_dir="neutral"
     bullet_x = x + player_size // 2 - bullet_size // 2
     bullet_y = y
     screen.blit(bullet_image, (bullet_x,bullet_y))
@@ -320,6 +327,8 @@ player_y = height // 2
 time_since_last_score_increase = 0  # Track time to increase score every second
 
 
+player_mask = create_player_mask(player_image, player_size, player_x, player_y)
+
 
 ### Main Game Loop ###
 while running:
@@ -333,14 +342,9 @@ while running:
     # Update player position based on movement input
     player_rect, player_hitbox = update_player_movement()
 
-    player_mask = create_player_mask(player_hitbox)
 
-    if keys[pygame.K_RIGHT] and bullet_state == "ready":
+    if keys[pygame.K_SPACE] and bullet_state == "ready":
         fire_bullet(player_x,player_y)
-        bullet_dir="right"
-    if keys[pygame.K_LEFT] and bullet_state == "ready":
-        fire_bullet(player_x,player_y)
-        bullet_dir="left"
    
     # Move the enemy towards the player
     for i in range(num_of_enemies):
@@ -354,8 +358,6 @@ while running:
     offset_y = player_hitbox.y - mud_rect.y  # Offset between player and mud in the y-axis
     mud_collision = mud_mask.overlap(player_mask, (offset_x, offset_y))
     
-        
-
     # Fill the background with black
     screen.fill((0, 0, 0))
 
@@ -411,7 +413,7 @@ while running:
 
 
     # If collision occurs, show "You Died" and restart after 5 seconds
-    if collision1 or mud_collision:
+    if collision1:
         display_you_died_and_restart(screen)
 
     # Display the current score
@@ -419,10 +421,7 @@ while running:
 
     if bullet_state is "fire":
         screen.blit(bullet_image, (bullet_x, bullet_y))
-        if bullet_dir is "right":
-            bullet_x += bulletx_change
-        elif bullet_dir is "left":
-            bullet_x -= bulletx_change
+        bullet_x += bulletx_change
         if bullet_x > width:  # Reset the bullet once it goes off screen
             bullet_state = "ready"
     # If a collision occurs, display a message on the screen
