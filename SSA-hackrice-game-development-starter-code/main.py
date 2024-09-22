@@ -217,8 +217,6 @@ def main_menu():
 main_menu()
 
 
-
-
 # Enemy Class to handle enemies ###
 class Enemy:
     def __init__(self):
@@ -398,13 +396,6 @@ def reset_game():
     tree_rect = spawn_tree_randomly(mud_rect)
     tree_mask = pygame.mask.from_surface(tree_image)
 
-    tree_hitbox = pygame.Rect(
-        tree_rect.x + tree_hitbox_reduction_width // 2,
-        tree_rect.y + tree_hitbox_reduction_height // 2,
-        tree_hitbox_size[0],
-        tree_hitbox_size[1]
-    )
-
     # Update the player's hitbox after positioning
     player_hitbox = pygame.Rect(
         player_x + hitbox_reduction // 2,
@@ -560,9 +551,10 @@ while running:
 
     collision1 = False
     for enemy in spawncamp:
-        if enemy.alive and player_hitbox.colliderect(enemy.rect):  # Only check collision with alive enemies
-            collision1 = True
-            break
+        if score >= 1:
+            if enemy.alive and player_hitbox.colliderect(enemy.rect):  # Only check collision with alive enemies
+                collision1 = True
+                break
 
             
     # If no collision occurs, increase the score every second
