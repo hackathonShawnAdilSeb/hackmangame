@@ -543,8 +543,6 @@ def display_you_died_and_restart(screen):
 
 def winner(screen):
     screen.fill((255, 255, 255))
-    if spawncamp:  # Ensure spawncamp is not empty before clearing
-        spawncamp.clear()
     text = font.render(f'CONGRATS YOU WON!', True, (0, 255, 255))
     screen.blit(text, (width // 2 - 150, height // 2))
     pygame.display.flip()
@@ -646,7 +644,7 @@ while running:
     boss_dead = not boss.alive
 
 # If all enemies are dead, increase the level and reset the game
-    if level < 2:
+    if level < 5:
         if all_enemies_dead:
             level += 1
             reset_game()  # Reset the game state for the new level
@@ -681,21 +679,7 @@ while running:
     #set background
     screen.blit(background, (0,0))
     
-    for portal in portals:
-        portal.draw(screen)
-    # Draw stuff on the screen
-    screen.blit(mud_image, mud_rect)
-    screen.blit(player_image, player_rect)
-    screen.blit(tree_image, tree_rect)
-
-    
-    # Draw the enemy on the screen
-    for i in range(num_of_enemies):
-        num_of_enemies = level * 3
-        spawncamp[i].draw(screen)
-    #enemy.draw(screen)
-    #enemy2.draw(screen)
-    if level >= 2:
+    if level >= 5:
         if not boss.alive:  # Check if the boss is dead
             boss = Boss()  # Create a new boss instance
             boss.alive = True  # Set boss as alive
@@ -719,7 +703,23 @@ while running:
 
             # Check if the boss has been defeated
             if not boss.alive:
+                level += 1  # Increase the level
+
                 winner(screen)  # Reset game state
+    for portal in portals:
+        portal.draw(screen)
+    # Draw stuff on the screen
+    screen.blit(mud_image, mud_rect)
+    screen.blit(player_image, player_rect)
+    screen.blit(tree_image, tree_rect)
+
+    
+    # Draw the enemy on the screen
+    for i in range(num_of_enemies):
+        num_of_enemies = level * 3
+        spawncamp[i].draw(screen)
+    #enemy.draw(screen)
+    #enemy2.draw(screen)
 
     collision1 = False
     for enemy in spawncamp:
@@ -728,7 +728,7 @@ while running:
                 collision1 = True
                 break
 
-    
+            
     # If no collision occurs, increase the score every second
     if not collision1:
         time_since_last_score_increase += clock.get_time()  # Track the time since last score increase
