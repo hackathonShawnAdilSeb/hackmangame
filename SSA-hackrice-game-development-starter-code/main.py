@@ -133,7 +133,7 @@ def main_menu():
     button_font = pygame.font.Font(None, 50)
     
    
-    start_button_rect = pygame.Rect(width // 2 - button_width // 2, height // 2 - 150, button_width, button_height)
+    start_button_rect = pygame.Rect(width // 2 - button_width // 2, height // 2 - 100, button_width, button_height)
     quit_button_rect = pygame.Rect(width // 2 - button_width // 2, height // 2 + button_padding, button_width, button_height)
 
     while True:
@@ -141,7 +141,7 @@ def main_menu():
         screen.blit(menu_background, (0, 0))
         
         
-        draw_text("WELCOME TO THE GOATBUSTERS GAME", title_font, (255, 255, 255), screen, width // 2, 100)
+        draw_text("WELCOME TO GOATBUSTERS", title_font, (255, 255, 255), screen, width // 2, 140)
 
         
         mouse_pos = pygame.mouse.get_pos()
@@ -165,8 +165,8 @@ def main_menu():
             pygame.draw.rect(screen, button_color, quit_button_rect)
 
         
-        draw_text("Start Game", button_font, (0, 0, 0), screen, width // 2, height // 2 - 110)
-        draw_text("Quit", button_font, (0, 0, 0), screen, width // 2, height // 2 + 40)
+        draw_text("Start Game", button_font, (0, 0, 0), screen, width // 2, height // 2 - 60)
+        draw_text("Quit", button_font, (0, 0, 0), screen, width // 2, height // 2 + 60)
 
         
         for event in pygame.event.get():
@@ -239,7 +239,7 @@ clock = pygame.time.Clock()
 running = True
 
 # Instantiate an enemy object (can add more enemies as needed)
-num_of_enemies = 0
+num_of_enemies = 5
 spawncamp=[]
 for i in range(num_of_enemies):
     spawncamp.append(Enemy())
@@ -417,7 +417,8 @@ while running:
                 (player_size, player_size)
             )
     else:
-        in_mud = False  # Player is not in mud anymore
+        in_mud = False
+          # Player is not in mud anymore
   # Slow down the player
 
     # Check if enough time has passed to restore the speed
@@ -434,6 +435,10 @@ while running:
     # If the player exits the mud, ensure the speed returns to normal
     if not in_mud and mud_collision_time is None:
         player_speed = 3  # Restore player speed immediately if out of mud
+        player_image = pygame.transform.scale(
+                pygame.image.load(os.path.join('goat.png')).convert_alpha(),
+                (player_size, player_size)
+            )
     # Reset the mud collision timer
 
     
