@@ -14,8 +14,8 @@ os.chdir(dname)
 pygame.init()
 
 # Define game variables
-player_size = 50
-enemy_size = 50
+player_size = 100
+enemy_size = 40
 player_speed = 3
 width = 800
 height = 600
@@ -40,8 +40,6 @@ player_image = pygame.transform.scale(player_image, (player_size, player_size))
 enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
 # Get the rectangle for the player image
 player_rect = player_image.get_rect()
-
-
 
 
 
@@ -104,10 +102,14 @@ clock = pygame.time.Clock()
 running = True
 
 # Instantiate an enemy object (can add more enemies as needed)
-num_of_enemies= 5
+num_of_enemies = 5
 spawncamp=[]
 for i in range(num_of_enemies):
     spawncamp.append(Enemy())
+
+hitbox_reduction = 75  # This will reduce 10 pixels from both width and height
+player_hitbox_size = player_size - hitbox_reduction
+
 
 
 # Function to update player movement based on WASD keys
@@ -131,9 +133,17 @@ def update_player_movement():
     player_x = max(0, min(width - player_size, player_x))
     player_y = max(0, min(height - player_size, player_y))
     
+    player_rect = pygame.Rect(player_x, player_y, player_size, player_size)
+
+    player_hitbox = pygame.Rect(
+        player_x + hitbox_reduction // 2,
+        player_y + hitbox_reduction // 2,
+        player_hitbox_size,
+        player_hitbox_size
+    )
 
     # Update and return the player's rectangle for further processing (like collision detection)
-    return pygame.Rect(player_x, player_y, player_size, player_size)
+    return pygame.Rect(player_x, player_y, player_size, player_size), player_hitbox
 
 # Function to reset the game state (score, enemy and player position)
 def reset_game():
@@ -143,13 +153,13 @@ def reset_game():
     spawncamp.clear()
     for i in range(num_of_enemies):
         spawncamp.append(Enemy())
-    #enemy = Enemy()  # Reset enemy by creating a new enemy
+   
     score = 0  # Reset score
 
 
 # Function to display "You Died" message and a countdown to restart
 def display_you_died_and_restart(screen):
-    for i in range(5, 0, -1):  # Countdown from 5 to 1
+    for i in range(3, 0, -1):  # Countdown from 5 to 1
         screen.fill((0, 0, 0))  # Clear the screen
         text = font.render(f'You Died! Restarting in {i}...', True, (255, 0, 0))
         screen.blit(text, (width // 2 - 150, height // 2))  # Display centered message
@@ -179,7 +189,7 @@ while running:
             running = False
 
     # Update player position based on movement input
-    player_rect = update_player_movement()
+    player_rect, player_hitbox = update_player_movement()
     
     # Move the enemy towards the player
     for i in range(num_of_enemies):
@@ -188,8 +198,8 @@ while running:
     #enemy.move_towards_player(player_rect)
     #enemy2.move_towards_player(player_rect)
     # Check for collision between player and enemy
-    for i in range(num_of_enemies):
-        collision1 = player_rect.colliderect(spawncamp[i].rect)
+    
+       
         
   
 
@@ -207,7 +217,13 @@ while running:
         spawncamp[i].draw(screen)
     #enemy.draw(screen)
     #enemy2.draw(screen)
-        
+
+    collision1 = False
+    for i in range(num_of_enemies):
+        if player_hitbox.colliderect(spawncamp[i].rect):
+            collision1 = True
+            break
+            
     # If no collision occurs, increase the score every second
     if not collision1:
         time_since_last_score_increase += clock.get_time()  # Track the time since last score increase
