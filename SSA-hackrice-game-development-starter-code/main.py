@@ -462,9 +462,9 @@ while running:
     # Fill the background with black
     screen.fill((0, 0, 0))
 
-    if score >= 15:
+    if score >= 5:
         level += 1  # Increase the level
-        score = 0  # Reset score after leveling up
+        reset_game()
         display_level_change(screen, level)
 
     #set background
