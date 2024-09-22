@@ -15,11 +15,20 @@ pygame.init()
 
 # Define game variables
 player_size = 100
+bullet_size= 30
 enemy_size = 40
 player_speed = 3
 width = 800
 height = 600
 score = 0 
+
+#bullet
+
+bullet_x=0
+bullet_y=0
+bulletx_change=10
+bullety_change=0
+bullet_state="ready"
 
 # Initialize the font variable for the game
 font = pygame.font.Font(None, 36)
@@ -33,9 +42,11 @@ pygame.display.set_caption('GOATBUSTERS')
 background=pygame.image.load('customgrass.png')
 
 # Load the player image
+bullet_image = pygame.image.load(os.path.join('bullet.png')).convert_alpha()
 player_image = pygame.image.load(os.path.join('goat.png')).convert_alpha()
 enemy_image = pygame.image.load(os.path.join('ghost.png')).convert_alpha()
 # Scale the player image to the desired size
+bullet_image = pygame.transform.scale(bullet_image, (bullet_size, bullet_size))
 player_image = pygame.transform.scale(player_image, (player_size, player_size))
 enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
 # Get the rectangle for the player image
@@ -110,7 +121,10 @@ for i in range(num_of_enemies):
 hitbox_reduction = 75  # This will reduce 10 pixels from both width and height
 player_hitbox_size = player_size - hitbox_reduction
 
-
+def fire_bullet(x,y):
+    global bullet_state
+    bullet_state="fire"
+    screen.blit(bullet_image, (x,y))
 
 # Function to update player movement based on WASD keys
 def update_player_movement():
@@ -128,7 +142,7 @@ def update_player_movement():
         player_y -= player_speed
     if keys[pygame.K_s]:  # Move down (S)
         player_y += player_speed
-   
+    
     # Ensure player's position stays within screen boundaries
     player_x = max(0, min(width - player_size, player_x))
     player_y = max(0, min(height - player_size, player_y))
@@ -182,6 +196,7 @@ time_since_last_score_increase = 0  # Track time to increase score every second
 
 ### Main Game Loop ###
 while running:
+    keys = pygame.key.get_pressed()
     # Event handling
     for event in pygame.event.get():
         # Quit the game if the user closes the window
@@ -190,7 +205,9 @@ while running:
 
     # Update player position based on movement input
     player_rect, player_hitbox = update_player_movement()
-    
+    if keys[pygame.K_SPACE]:
+        fire_bullet(bullet_x,player_y)
+   
     # Move the enemy towards the player
     for i in range(num_of_enemies):
         spawncamp[i].move_towards_player(player_rect)
@@ -236,17 +253,19 @@ while running:
     if collision1:
         display_you_died_and_restart(screen)
 
-# Display the current score
+    # Display the current score
     display_score(screen, score)
 
-
-
+    if bullet_state is "fire":
+        fire_bullet(bullet_x, player_y)
+        bullet_x += bulletx_change
     # If a collision occurs, display a message on the screen
     '''
     if collision1:
         text = font.render('Collision Occurred!', True, (255, 255, 255))
         screen.blit(text, (10, 10))
-    '''
+    ''' 
+    
     # Update the display
     pygame.display.flip()
 
