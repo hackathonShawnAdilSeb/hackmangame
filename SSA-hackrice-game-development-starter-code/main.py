@@ -34,7 +34,7 @@ background=pygame.image.load('customgrass.png')
 
 # Load the player image
 player_image = pygame.image.load(os.path.join('goat.png')).convert_alpha()
-enemy_image = pygame.image.load(os.path.join('enemy.png')).convert_alpha()
+enemy_image = pygame.image.load(os.path.join('ghost.png')).convert_alpha()
 # Scale the player image to the desired size
 player_image = pygame.transform.scale(player_image, (player_size, player_size))
 enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
@@ -123,7 +123,6 @@ def reset_game():
     global player_x, player_y, enemy, score
     player_x = width // 2  # Reset player position to the center of the screen
     player_y = height // 2
-    spawncamp.clear()
     for i in range(num_of_enemies):
         spawncamp.append(Enemy())
     #enemy = Enemy()  # Reset enemy by creating a new enemy
@@ -208,11 +207,11 @@ while running:
 
 
     # If a collision occurs, display a message on the screen
-   
+    '''
     if collision1:
         text = font.render('Collision Occurred!', True, (255, 255, 255))
         screen.blit(text, (10, 10))
-    
+    '''
     # Update the display
     pygame.display.flip()
 
