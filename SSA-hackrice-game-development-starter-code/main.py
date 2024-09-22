@@ -24,11 +24,11 @@ score = 0
 
 #bullet
 
-bullet_x=0
-bullet_y=0
-bulletx_change=10
-bullety_change=0
-bullet_state="ready"
+bullet_x = 0
+bullet_y = 0 
+bulletx_change = 10
+bullety_change = 0
+bullet_state = "ready"
 
 # Initialize the font variable for the game
 font = pygame.font.Font(None, 36)
@@ -81,6 +81,7 @@ font = pygame.font.Font(None, 36)
 # Initialize screen display with width and height 
 screen = pygame.display.set_mode((width, height))
 
+
 # Set the current screen caption
 pygame.display.set_caption('GOATBUSTERS')
 
@@ -95,7 +96,17 @@ enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
 # Get the rectangle for the player image
 player_rect = player_image.get_rect()
 
+#mud
+mud_image = pygame.image.load(os.path.join('mud3.png')).convert_alpha()
+mud_mask = pygame.mask.from_surface(mud_image)
+mud_rect = mud_image.get_rect(topleft=(200, 300))
 
+def create_player_mask(player_rect):
+    player_surface = pygame.Surface((player_hitbox_size, player_hitbox_size), pygame.SRCALPHA)
+    # Blit the player's image onto the surface
+    player_surface.blit(player_image, (0, 0), player_rect)
+    # Create and return the mask from the player's surface
+    return pygame.mask.from_surface(player_surface)
 
 
 def draw_text(text, font, color, surface, x, y):
@@ -216,7 +227,7 @@ class Enemy:
     
         
 
-#
+
 
 # Create an object to help track time (FPS control)
 clock = pygame.time.Clock()
@@ -317,6 +328,9 @@ while running:
 
     # Update player position based on movement input
     player_rect, player_hitbox = update_player_movement()
+
+    player_mask = create_player_mask(player_hitbox)
+
     if keys[pygame.K_SPACE]:
         fire_bullet(bullet_x,player_y)
    
@@ -328,18 +342,27 @@ while running:
     #enemy2.move_towards_player(player_rect)
     # Check for collision between player and enemy
     
-       
+    offset_x = player_hitbox.x - mud_rect.x  # Offset between player and mud in the x-axis
+    offset_y = player_hitbox.y - mud_rect.y  # Offset between player and mud in the y-axis
+    mud_collision = mud_mask.overlap(player_mask, (offset_x, offset_y))
+    
         
-  
 
     # Fill the background with black
     screen.fill((0, 0, 0))
+
+
 
     #set background
     screen.blit(background, (0,0))
     
     # Draw the player on the screen
     screen.blit(player_image, player_rect)
+
+    screen.blit(mud_image, mud_rect)
+
+    pygame.draw.rect(screen, (255, 0, 0), mud_rect, 2)  # Red box around the mud
+    pygame.draw.rect(screen, (0, 0, 255), player_hitbox, 2)  # Blue box around the player
 
     # Draw the enemy on the screen
     for i in range(num_of_enemies):
@@ -360,9 +383,27 @@ while running:
             score += 1  # Increase the score by 1
             time_since_last_score_increase = 0  # Reset the timer
 
+    mud_slowdown_duration = 2000  # Slowdown lasts for 2 seconds
+    mud_collision_time = None  # Track when the player enters the mud
+
+    # Inside the main game loop where you handle the mud collision:
+    if mud_collision:
+        if mud_collision_time is None:  # If the player just collided with the mud
+            mud_collision_time = pygame.time.get_ticks()  # Record the current time
+            player_speed = 1.5  # Slow down the player
+
+    # Check if enough time has passed to restore the speed
+    if mud_collision_time is not None:
+        current_time = pygame.time.get_ticks()
+        if current_time - mud_collision_time > mud_slowdown_duration:  # Check if 2 seconds have passed
+            player_speed = 3  # Restore player speed
+            mud_collision_time = None
+    
+
+
 
     # If collision occurs, show "You Died" and restart after 5 seconds
-    if collision1:
+    if collision1 or mud_collision:
         display_you_died_and_restart(screen)
 
     # Display the current score
