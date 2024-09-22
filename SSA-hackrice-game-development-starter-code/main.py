@@ -74,11 +74,20 @@ class Enemy:
         self.rect.x += direction.x * self.speed
         self.rect.y += direction.y * self.speed
 
+    def move_away_from_other_enemies(self, enemies):
+        for other_enemy in enemies:
+            if other_enemy != self:  # Check that we're not comparing the enemy with itself
+                if self.rect.colliderect(other_enemy.rect):  # If there's a collision
+                    # Move this enemy away from the other enemy
+                    overlap_direction = pygame.Vector2(self.rect.center) - pygame.Vector2(other_enemy.rect.center)
+                    if overlap_direction.length() != 0:
+                        overlap_direction = overlap_direction.normalize()  # Normalize direction
+                    self.rect.x += overlap_direction.x * self.speed
+                    self.rect.y += overlap_direction.y * self.speed
+
     # Draw the enemy on the screen
     def draw(self, screen):
-        screen.blit(enemy_image, self.rect)  # Draw enemy as a blue rectangle
-
-
+        screen.blit(enemy_image, self.rect)  
 #
 
 # Create an object to help track time (FPS control)
@@ -167,6 +176,7 @@ while running:
     # Move the enemy towards the player
     for i in range(num_of_enemies):
         spawncamp[i].move_towards_player(player_rect)
+        spawncamp[i].move_away_from_other_enemies(spawncamp)
     #enemy.move_towards_player(player_rect)
     #enemy2.move_towards_player(player_rect)
     # Check for collision between player and enemy
