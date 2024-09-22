@@ -139,9 +139,6 @@ tree_mask = pygame.mask.from_surface(tree_image)
 tree_rect = spawn_tree_randomly(mud_rect)
 
 
-
-
-
 def create_player_mask(player_image, player_size, player_x, player_y):
 
     player_surface = pygame.Surface((player_size, player_size), pygame.SRCALPHA)
@@ -391,15 +388,17 @@ def reset_game():
    
     score = 0  # Reset score
 
-    if level > 2:
-        mud_rect = spawn_mud_randomly(tree_rect)
-        mud_mask = pygame.mask.from_surface(mud_image)
-        tree_rect = spawn_tree_randomly(mud_rect)
-        tree_mask = pygame.mask.from_surface(tree_image)
-    if level > 1:
-        tree_rect = spawn_tree_randomly(mud_rect)
-        tree_mask = pygame.mask.from_surface(tree_image)
-    
+    mud_rect = spawn_mud_randomly(tree_rect)
+    mud_mask = pygame.mask.from_surface(mud_image)
+    tree_rect = spawn_tree_randomly(mud_rect)
+    tree_mask = pygame.mask.from_surface(tree_image)
+
+    tree_hitbox = pygame.Rect(
+        tree_rect.x + tree_hitbox_reduction_width // 2,
+        tree_rect.y + tree_hitbox_reduction_height // 2,
+        tree_hitbox_size[0],
+        tree_hitbox_size[1]
+    )
 
     while True:
         player_x = random.randint(0, width - player_size)
@@ -468,6 +467,16 @@ def display_score_and_level(screen, score, level):
     screen.blit(score_text, (10, 10))  # Display score in the top-left corner
     screen.blit(level_text, (10, 50))  # Display level below score
 
+mud_rect = spawn_mud_randomly(pygame.Rect(0, 0, 0, 0)) 
+tree_rect = spawn_tree_randomly(mud_rect)
+
+tree_hitbox = pygame.Rect(
+    tree_rect.x + tree_hitbox_reduction_width // 2,
+    tree_rect.y + tree_hitbox_reduction_height // 2,
+    tree_hitbox_size[0],
+    tree_hitbox_size[1]
+)
+
 ### Main Game Loop ###
 while running:
 
@@ -507,12 +516,7 @@ while running:
     offset_x = player_hitbox.x - mud_rect.x  # Offset between player and mud in the x-axis
     offset_y = player_hitbox.y - mud_rect.y  # Offset between player and mud in the y-axis
     mud_collision = mud_mask.overlap(player_mask, (offset_x, offset_y))
-    
-    if level > 2:
-        mud_rect = spawn_mud_randomly(tree_rect)
-        tree_rect = spawn_tree_randomly(mud_rect)
-    elif level > 1:
-        tree_rect = spawn_tree_randomly(mud_rect)
+
 
     
     # Fill the background with black
@@ -530,15 +534,9 @@ while running:
     screen.blit(background, (0,0))
     
     # Draw stuff on the screen
-    if level > 2:
-        screen.blit(mud_image, mud_rect)
-        screen.blit(player_image, player_rect)
-        screen.blit(tree_image, tree_rect)
-    elif level > 1:
-        screen.blit(player_image, player_rect)
-        screen.blit(tree_image, tree_rect)
-    else:
-        screen.blit(player_image, player_rect)
+    screen.blit(mud_image, mud_rect)
+    screen.blit(player_image, player_rect)
+    screen.blit(tree_image, tree_rect)
 
     
     # Draw the enemy on the screen
