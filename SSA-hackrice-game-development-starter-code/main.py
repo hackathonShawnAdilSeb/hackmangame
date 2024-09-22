@@ -279,7 +279,7 @@ clock = pygame.time.Clock()
 running = True
 
 # Instantiate an enemy object (can add more enemies as needed)
-num_of_enemies = (level * 0)
+num_of_enemies = (level * 3)
 spawncamp=[]
 for i in range(num_of_enemies):
     spawncamp.append(Enemy())
@@ -381,7 +381,7 @@ def reset_game():
     global player_x, player_y, score, enemy, mud_rect, mud_mask, tree_rect, tree_mask, tree_hitbox
     player_x = width // 2  # Reset player position to the center of the screen
     player_y = height // 2
-    num_of_enemies = level * 0
+    num_of_enemies = level * 3
     spawncamp.clear()
     for i in range(num_of_enemies):
         spawncamp.append(Enemy())
@@ -496,13 +496,25 @@ while running:
         bullet_dir = "right" if keys[pygame.K_RIGHT] else "left"
 
     for enemy in spawncamp:
-        if enemy.alive and enemy.rect.colliderect(pygame.Rect(bullet_x, bullet_y, bullet_size, bullet_size)):
+        if enemy.alive and enemy.rect.colliderect(pygame.Rect(bullet_x, bullet_y, bullet_size, bullet_size)):  # Check if enemy is alive
             enemy.kill()  # Mark the enemy as dead
             bullet_state = "ready"  # Reset bullet state
             break
+
     for enemy in spawncamp:
-        enemy.move_towards_player(player_rect)
-        enemy.move_away_from_other_enemies(spawncamp)
+        if enemy.alive:  # Only move if the enemy is alive
+            enemy.move_towards_player(player_rect)
+            enemy.move_away_from_other_enemies(spawncamp)
+
+
+    # Check if all enemies are dead
+    all_enemies_dead = all(not enemy.alive for enemy in spawncamp)
+
+# If all enemies are dead, increase the level and reset the game
+    if all_enemies_dead:
+        level += 1
+        reset_game()  # Reset the game state for the new level
+        display_level_change(screen, level)
 
     # Move the enemy towards the player
     for i in range(num_of_enemies):
@@ -525,7 +537,7 @@ while running:
     for enemy in spawncamp:
         enemy.draw(screen)
 
-    if score >= 40:
+    if score >= 30:
         level += 1  # Increase the level
         reset_game()
         display_level_change(screen, level)
@@ -541,16 +553,17 @@ while running:
     
     # Draw the enemy on the screen
     for i in range(num_of_enemies):
-        num_of_enemies = level * 0
+        num_of_enemies = level * 3
         spawncamp[i].draw(screen)
     #enemy.draw(screen)
     #enemy2.draw(screen)
 
     collision1 = False
-    for i in range(num_of_enemies):
-        if player_hitbox.colliderect(spawncamp[i].rect):
+    for enemy in spawncamp:
+        if enemy.alive and player_hitbox.colliderect(enemy.rect):  # Only check collision with alive enemies
             collision1 = True
             break
+
             
     # If no collision occurs, increase the score every second
     if not collision1:
