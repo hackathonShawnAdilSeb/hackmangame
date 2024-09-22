@@ -27,7 +27,7 @@ font = pygame.font.Font(None, 36)
 screen = pygame.display.set_mode((width, height))
 
 # Set the current screen caption
-pygame.display.set_caption('Collision Detection Example')
+pygame.display.set_caption('GOATBUSTERS')
 
 background=pygame.image.load('customgrass.png')
 
