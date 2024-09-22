@@ -48,6 +48,7 @@ player_rect = player_image.get_rect()
 # Enemy Class to handle enemies ###
 class Enemy:
     def __init__(self):
+        
         # Randomly select enemy's starting edge (top, bottom, left, right)
         edge = random.choice(['top', 'bottom', 'left', 'right'])
         
@@ -62,7 +63,7 @@ class Enemy:
             self.rect = pygame.Rect(width - enemy_size, random.randint(0, height - enemy_size), enemy_size, enemy_size)
         
         # Define the speed for the enemy
-        self.speed = 1.5
+        self.speed = 2
 
     # Move the enemy towards the player
     def move_towards_player(self, player_rect):
@@ -73,6 +74,8 @@ class Enemy:
         # Update the enemy's position to move towards the player
         self.rect.x += direction.x * self.speed
         self.rect.y += direction.y * self.speed
+        self.rect.x = max(0, min(width - enemy_size, self.rect.x))
+        self.rect.y = max(0, min(height - enemy_size, self.rect.y))
 
     def move_away_from_other_enemies(self, enemies):
         for other_enemy in enemies:
@@ -84,10 +87,14 @@ class Enemy:
                         overlap_direction = overlap_direction.normalize()  # Normalize direction
                     self.rect.x += overlap_direction.x * self.speed
                     self.rect.y += overlap_direction.y * self.speed
+                    
 
     # Draw the enemy on the screen
     def draw(self, screen):
         screen.blit(enemy_image, self.rect)  
+    
+        
+
 #
 
 # Create an object to help track time (FPS control)
@@ -123,6 +130,7 @@ def update_player_movement():
     # Ensure player's position stays within screen boundaries
     player_x = max(0, min(width - player_size, player_x))
     player_y = max(0, min(height - player_size, player_y))
+    
 
     # Update and return the player's rectangle for further processing (like collision detection)
     return pygame.Rect(player_x, player_y, player_size, player_size)
