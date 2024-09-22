@@ -1,0 +1,112 @@
+# import necessary modules
+import pygame, sys
+import sys
+import os 
+import random
+import time
+
+# Ensure the working directory is the script's directory
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+# Initialize all imported pygame modules
+pygame.init()
+
+# Define game variables
+player_size = 100
+enemy_size = 40
+player_speed = 3
+width = 800
+height = 600
+score = 0 
+
+# Initialize the font variable for the game
+font = pygame.font.Font(None, 36)
+
+# Initialize screen display with width and height 
+screen = pygame.display.set_mode((width, height))
+
+# Set the current screen caption
+pygame.display.set_caption('GOATBUSTERS')
+
+background=pygame.image.load('customgrass.png')
+
+# Load the player image
+player_image = pygame.image.load(os.path.join('goat.png')).convert_alpha()
+enemy_image = pygame.image.load(os.path.join('ghost.png')).convert_alpha()
+# Scale the player image to the desired size
+player_image = pygame.transform.scale(player_image, (player_size, player_size))
+enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
+# Get the rectangle for the player image
+player_rect = player_image.get_rect()
+
+
+
+
+def draw_text(text, font, color, surface, x, y):
+    
+    text_obj = font.render(text, True, color)
+    text_rect = text_obj.get_rect(center=(x, y))
+    surface.blit(text_obj, text_rect)
+
+def main_menu():
+   
+    button_color = (100, 200, 150)
+    button_hover_color = (150, 255, 200)
+    button_width = 400
+    button_height = 80
+    button_padding = 20
+    
+    
+    menu_background = pygame.image.load('customgrass.png')
+
+    title_font = pygame.font.Font(None, 50)
+    button_font = pygame.font.Font(None, 50)
+    
+   
+    start_button_rect = pygame.Rect(width // 2 - button_width // 2, height // 2 - 150, button_width, button_height)
+    quit_button_rect = pygame.Rect(width // 2 - button_width // 2, height // 2 + button_padding, button_width, button_height)
+
+    while True:
+        
+        screen.blit(menu_background, (0, 0))
+        
+        
+        draw_text("WELCOME TO THE GOATBUSTERS GAME", title_font, (255, 255, 255), screen, width // 2, 100)
+
+        
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_click = pygame.mouse.get_pressed()
+
+       
+        if start_button_rect.collidepoint(mouse_pos):
+            pygame.draw.rect(screen, button_hover_color, start_button_rect)
+            if mouse_click[0]:  
+                return  
+        else:
+            pygame.draw.rect(screen, button_color, start_button_rect)
+
+        
+        if quit_button_rect.collidepoint(mouse_pos):
+            pygame.draw.rect(screen, button_hover_color, quit_button_rect)
+            if mouse_click[0]:  
+                pygame.quit()
+                sys.exit()
+        else:
+            pygame.draw.rect(screen, button_color, quit_button_rect)
+
+        
+        draw_text("Start Game", button_font, (0, 0, 0), screen, width // 2, height // 2 - 110)
+        draw_text("Quit", button_font, (0, 0, 0), screen, width // 2, height // 2 + 40)
+
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        pygame.display.flip()
+
+        
+main_menu()
