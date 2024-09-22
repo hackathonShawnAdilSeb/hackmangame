@@ -17,7 +17,7 @@ pygame.init()
 player_size = 100
 bullet_size= 30
 enemy_size = 40
-player_speed = 3
+player_speed = 8
 width = 800
 height = 600
 score = 0 
@@ -71,7 +71,7 @@ pygame.init()
 # Define game variables
 player_size = 100
 enemy_size = 40
-player_speed = 3
+player_speed = 8
 width = 800
 height = 600
 score = 0 
@@ -219,8 +219,7 @@ def main_menu():
         
 main_menu()
 
-mud_rect = spawn_mud_randomly(tree_rect)
-tree_rect = spawn_tree_randomly(mud_rect)
+
 
 # Enemy Class to handle enemies ###
 class Enemy:
@@ -240,10 +239,13 @@ class Enemy:
             self.rect = pygame.Rect(width - enemy_size, random.randint(0, height - enemy_size), enemy_size, enemy_size)
         
         # Define the speed for the enemy
-        self.speed = 2
+        self.speed = 1
+        self.alive = True
 
     # Move the enemy towards the player
     def move_towards_player(self, player_rect):
+        if not self.alive:
+            return
         # Calculate the direction vector towards the player
         direction = pygame.Vector2(player_rect.center) - pygame.Vector2(self.rect.center)
         if direction.length() != 0:
@@ -255,6 +257,8 @@ class Enemy:
         self.rect.y = max(0, min(height - enemy_size, self.rect.y))
 
     def move_away_from_other_enemies(self, enemies):
+        if not self.alive:  # Do not move if dead
+            return
         for other_enemy in enemies:
             if other_enemy != self:  # Check that we're not comparing the enemy with itself
                 if self.rect.colliderect(other_enemy.rect):  # If there's a collision
@@ -266,8 +270,10 @@ class Enemy:
                     self.rect.y += overlap_direction.y * self.speed
                     
     def draw(self, screen):
-        screen.blit(enemy_image, self.rect)
-
+        if self.alive:  # Only draw if the enemy is alive
+            screen.blit(enemy_image, self.rect)
+    def kill(self):
+        self.alive = False
 
 # Create an object to help track time (FPS control)
 clock = pygame.time.Clock()
@@ -276,7 +282,7 @@ clock = pygame.time.Clock()
 running = True
 
 # Instantiate an enemy object (can add more enemies as needed)
-num_of_enemies = (level * 5)
+num_of_enemies = (level * 0)
 spawncamp=[]
 for i in range(num_of_enemies):
     spawncamp.append(Enemy())
@@ -378,17 +384,22 @@ def reset_game():
     global player_x, player_y, score, enemy, mud_rect, mud_mask, tree_rect, tree_mask, tree_hitbox
     player_x = width // 2  # Reset player position to the center of the screen
     player_y = height // 2
-    num_of_enemies = level * 5
+    num_of_enemies = level * 0
     spawncamp.clear()
     for i in range(num_of_enemies):
         spawncamp.append(Enemy())
    
     score = 0  # Reset score
 
-    mud_rect = spawn_mud_randomly(tree_rect)
-    mud_mask = pygame.mask.from_surface(mud_image)
-    tree_rect = spawn_tree_randomly(mud_rect)
-    tree_mask = pygame.mask.from_surface(tree_image)
+    if level > 2:
+        mud_rect = spawn_mud_randomly(tree_rect)
+        mud_mask = pygame.mask.from_surface(mud_image)
+        tree_rect = spawn_tree_randomly(mud_rect)
+        tree_mask = pygame.mask.from_surface(tree_image)
+    if level > 1:
+        tree_rect = spawn_tree_randomly(mud_rect)
+        tree_mask = pygame.mask.from_surface(tree_image)
+    
 
     while True:
         player_x = random.randint(0, width - player_size)
@@ -472,13 +483,18 @@ while running:
 
 
     if (keys[pygame.K_RIGHT] or keys[pygame.K_LEFT]) and bullet_state == "ready":
-        fire_bullet(player_x,player_y)
-        if keys[pygame.K_RIGHT]:
-            bullet_dir="right"
-        if keys[pygame.K_LEFT]:
-            bullet_dir="left"
-    
-   
+        fire_bullet(player_x, player_y)
+        bullet_dir = "right" if keys[pygame.K_RIGHT] else "left"
+
+    for enemy in spawncamp:
+        if enemy.alive and enemy.rect.colliderect(pygame.Rect(bullet_x, bullet_y, bullet_size, bullet_size)):
+            enemy.kill()  # Mark the enemy as dead
+            bullet_state = "ready"  # Reset bullet state
+            break
+    for enemy in spawncamp:
+        enemy.move_towards_player(player_rect)
+        enemy.move_away_from_other_enemies(spawncamp)
+
     # Move the enemy towards the player
     for i in range(num_of_enemies):
         spawncamp[i].move_towards_player(player_rect)
@@ -492,10 +508,20 @@ while running:
     offset_y = player_hitbox.y - mud_rect.y  # Offset between player and mud in the y-axis
     mud_collision = mud_mask.overlap(player_mask, (offset_x, offset_y))
     
+    if level > 2:
+        mud_rect = spawn_mud_randomly(tree_rect)
+        tree_rect = spawn_tree_randomly(mud_rect)
+    elif level > 1:
+        tree_rect = spawn_tree_randomly(mud_rect)
+
+    
     # Fill the background with black
     screen.fill((0, 0, 0))
 
-    if score >= 5:
+    for enemy in spawncamp:
+        enemy.draw(screen)
+
+    if score >= 40:
         level += 1  # Increase the level
         reset_game()
         display_level_change(screen, level)
@@ -504,7 +530,7 @@ while running:
     screen.blit(background, (0,0))
     
     # Draw stuff on the screen
-    if level >2:
+    if level > 2:
         screen.blit(mud_image, mud_rect)
         screen.blit(player_image, player_rect)
         screen.blit(tree_image, tree_rect)
@@ -517,7 +543,7 @@ while running:
     
     # Draw the enemy on the screen
     for i in range(num_of_enemies):
-        num_of_enemies = level * 5
+        num_of_enemies = level * 0
         spawncamp[i].draw(screen)
     #enemy.draw(screen)
     #enemy2.draw(screen)
@@ -569,7 +595,7 @@ while running:
             mud_collision_time = None 
     # If the player exits the mud, ensure the speed returns to normal
     if not in_mud and mud_collision_time is None:
-        player_speed = 3  # Restore player speed immediately if out of mud
+        player_speed = 8  # Restore player speed immediately if out of mud
         player_image = pygame.transform.scale(
                 pygame.image.load(os.path.join('goat.png')).convert_alpha(),
                 (player_size, player_size)
