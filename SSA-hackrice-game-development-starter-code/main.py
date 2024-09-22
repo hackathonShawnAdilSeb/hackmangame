@@ -123,6 +123,7 @@ def reset_game():
     global player_x, player_y, enemy, score
     player_x = width // 2  # Reset player position to the center of the screen
     player_y = height // 2
+    spawncamp.clear()
     for i in range(num_of_enemies):
         spawncamp.append(Enemy())
     #enemy = Enemy()  # Reset enemy by creating a new enemy
