@@ -212,6 +212,7 @@ def main_menu():
 main_menu()
 
 mud_rect = spawn_mud_randomly()
+tree_rect = spawn_tree_randomly()
 
 # Enemy Class to handle enemies ###
 class Enemy:
@@ -256,13 +257,7 @@ class Enemy:
                     self.rect.x += overlap_direction.x * self.speed
                     self.rect.y += overlap_direction.y * self.speed
                     
-
-    # Draw the enemy on the screen
-    def draw(self, screen):
-        screen.blit(enemy_image, self.rect)  
     
-        
-
 
 
 # Create an object to help track time (FPS control)
@@ -272,7 +267,7 @@ clock = pygame.time.Clock()
 running = True
 
 # Instantiate an enemy object (can add more enemies as needed)
-num_of_enemies = 5
+num_of_enemies = 0
 spawncamp=[]
 for i in range(num_of_enemies):
     spawncamp.append(Enemy())
@@ -285,6 +280,16 @@ player_hitbox = pygame.Rect(
     player_hitbox_size,
     player_hitbox_size
 )
+
+tree_hitbox_reduction = 25
+tree_hitbox_size = (tree_size[0] - tree_hitbox_reduction, tree_size[1] - tree_hitbox_reduction)
+tree_hitbox = pygame.Rect(
+    tree_rect.x + tree_hitbox_reduction // 2,  # Offset the hitbox to the center
+    tree_rect.y + tree_hitbox_reduction // 2,  
+    tree_hitbox_size[0], 
+    tree_hitbox_size[1]
+)
+
 
 def fire_bullet(x,y):
     global bullet_state,bullet_dir, bullet_x, bullet_y
@@ -301,6 +306,9 @@ def update_player_movement():
     global player_image
     # Get the state of all keyboard buttons
     keys = pygame.key.get_pressed()
+
+    original_x = player_x
+    original_y = player_y
     
     # Update player's x and y coordinates based on key presses
     if keys[pygame.K_a]:  # Move left (A)
@@ -345,12 +353,17 @@ def update_player_movement():
         player_hitbox_size
     )
 
+    if player_hitbox.colliderect(tree_hitbox):
+        # Reset player position if collision is detected
+        player_x = original_x
+        player_y = original_y
+
     # Update and return the player's rectangle for further processing (like collision detection)
     return pygame.Rect(player_x, player_y, player_size, player_size), player_hitbox
 
 # Function to reset the game state (score, enemy and player position)
 def reset_game():
-    global player_x, player_y, score, mud_rect, mud_mask
+    global player_x, player_y, score, mud_rect, mud_mask, tree_rect, tree_mask
     player_x = width // 2  # Reset player position to the center of the screen
     player_y = height // 2
     spawncamp.clear()
@@ -361,6 +374,8 @@ def reset_game():
 
     mud_rect = spawn_mud_randomly()
     mud_mask = pygame.mask.from_surface(mud_image)
+    tree_rect = spawn_tree_randomly()
+    tree_mask = pygame.mask.from_surface(tree_image)
 
 
 # Function to display "You Died" message and a countdown to restart
@@ -429,15 +444,11 @@ while running:
     #set background
     screen.blit(background, (0,0))
     
-    # Draw the player on the screen
+    # Draw stuff on the screen
     screen.blit(mud_image, mud_rect)
     screen.blit(player_image, player_rect)
-
+    screen.blit(tree_image, tree_rect)
     
-
-    pygame.draw.rect(screen, (255, 0, 0), mud_rect, 2)  # Red box around the mud
-    pygame.draw.rect(screen, (0, 0, 255), player_hitbox, 2)  # Blue box around the player
-
     # Draw the enemy on the screen
     for i in range(num_of_enemies):
         spawncamp[i].draw(screen)
