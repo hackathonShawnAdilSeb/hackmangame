@@ -245,9 +245,11 @@ hitbox_reduction = 75  # This will reduce 10 pixels from both width and height
 player_hitbox_size = player_size - hitbox_reduction
 
 def fire_bullet(x,y):
-    global bullet_state
+    global bullet_state, bullet_x, bullet_y
     bullet_state="fire"
-    screen.blit(bullet_image, (x,y))
+    bullet_x = x + player_size // 2 - bullet_size // 2
+    bullet_y = y
+    screen.blit(bullet_image, (bullet_x,bullet_y))
 
 # Function to update player movement based on WASD keys
 def update_player_movement():
@@ -331,8 +333,8 @@ while running:
 
     player_mask = create_player_mask(player_hitbox)
 
-    if keys[pygame.K_SPACE]:
-        fire_bullet(bullet_x,player_y)
+    if keys[pygame.K_SPACE] and bullet_state == "ready":
+        fire_bullet(player_x,player_y)
    
     # Move the enemy towards the player
     for i in range(num_of_enemies):
@@ -410,8 +412,10 @@ while running:
     display_score(screen, score)
 
     if bullet_state is "fire":
-        fire_bullet(bullet_x, player_y)
+        screen.blit(bullet_image, (bullet_x, bullet_y))
         bullet_x += bulletx_change
+        if bullet_x > width:  # Reset the bullet once it goes off screen
+            bullet_state = "ready"
     # If a collision occurs, display a message on the screen
     '''
     if collision1:
