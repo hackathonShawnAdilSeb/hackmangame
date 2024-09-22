@@ -117,7 +117,6 @@ def draw_text(text, font, color, surface, x, y):
 player_x = width // 2
 player_y = height // 2
 
-
 def main_menu():
    
     button_color = (100, 200, 150)
@@ -367,9 +366,10 @@ while running:
     screen.blit(background, (0,0))
     
     # Draw the player on the screen
+    screen.blit(mud_image, mud_rect)
     screen.blit(player_image, player_rect)
 
-    screen.blit(mud_image, mud_rect)
+    
 
     pygame.draw.rect(screen, (255, 0, 0), mud_rect, 2)  # Red box around the mud
     pygame.draw.rect(screen, (0, 0, 255), player_hitbox, 2)  # Blue box around the player
@@ -399,7 +399,11 @@ while running:
     # Inside the main game loop where you handle the mud collision:
     if mud_collision:
         if mud_collision_time is None:  # If the player just collided with the mud
-            mud_collision_time = pygame.time.get_ticks()  # Record the current time
+            mud_collision_time = pygame.time.get_ticks()  
+            player_image = pygame.transform.scale(
+            pygame.image.load(os.path.join('mud_goat.png')).convert_alpha(),
+            (player_size, player_size)
+        )
             player_speed = 1.5  # Slow down the player
 
     # Check if enough time has passed to restore the speed
