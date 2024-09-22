@@ -75,7 +75,8 @@ player_speed = 3
 width = 800
 height = 600
 score = 0 
-
+level = 1
+level_score_update = 5
 # Initialize the font variable for the game
 font = pygame.font.Font(None, 36)
 
@@ -275,7 +276,7 @@ clock = pygame.time.Clock()
 running = True
 
 # Instantiate an enemy object (can add more enemies as needed)
-num_of_enemies = 0
+num_of_enemies = 5
 spawncamp=[]
 for i in range(num_of_enemies):
     spawncamp.append(Enemy())
@@ -411,6 +412,19 @@ time_since_last_score_increase = 0  # Track time to increase score every second
 
 player_mask = create_player_mask(player_image, player_size, player_x, player_y)
 
+# Function to display level-up announcement
+def display_level_change(screen, level):
+    level_text = font.render(f'Level {level}', True, (255, 255, 0))  # Yellow color for level change announcement
+    screen.blit(level_text, (width // 2 - 50, height // 2))
+    pygame.display.flip()
+    time.sleep(2)  # Pause for 2 seconds to display the level change
+
+# Function to display the current score and level
+def display_score_and_level(screen, score, level):
+    score_text = font.render(f'Score: {score}', True, (255, 255, 255))
+    level_text = font.render(f'Level: {level}', True, (255, 255, 255))
+    screen.blit(score_text, (10, 10))  # Display score in the top-left corner
+    screen.blit(level_text, (10, 50))  # Display level below score
 
 ### Main Game Loop ###
 while running:
@@ -448,7 +462,10 @@ while running:
     # Fill the background with black
     screen.fill((0, 0, 0))
 
-
+    if score >= 5:
+        level += 1  # Increase the level
+        score = 0  # Reset score after leveling up
+        display_level_change(screen, level)
 
     #set background
     screen.blit(background, (0,0))
