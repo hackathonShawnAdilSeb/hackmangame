@@ -3,6 +3,7 @@ import pygame
 import sys
 import os 
 import random
+import time
 
 # Ensure the working directory is the script's directory
 abspath = os.path.abspath(__file__)
@@ -18,7 +19,7 @@ enemy_size = 50
 player_speed = 3
 width = 800
 height = 600
-
+score = 0 
 
 # Initialize the font variable for the game
 font = pygame.font.Font(None, 36)
@@ -40,9 +41,7 @@ enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
 # Get the rectangle for the player image
 player_rect = player_image.get_rect()
 
-# Define player's initial position at the center of the screen
-player_x = width // 2
-player_y = height // 2
+
 
 
 
@@ -89,7 +88,11 @@ clock = pygame.time.Clock()
 running = True
 
 # Instantiate an enemy object (can add more enemies as needed)
-enemy = Enemy()
+num_of_enemies= 5
+spawncamp=[]
+for i in range(num_of_enemies):
+    spawncamp.append(Enemy())
+
 
 # Function to update player movement based on WASD keys
 def update_player_movement():
@@ -115,6 +118,39 @@ def update_player_movement():
     # Update and return the player's rectangle for further processing (like collision detection)
     return pygame.Rect(player_x, player_y, player_size, player_size)
 
+# Function to reset the game state (score, enemy and player position)
+def reset_game():
+    global player_x, player_y, enemy, score
+    player_x = width // 2  # Reset player position to the center of the screen
+    player_y = height // 2
+    for i in range(num_of_enemies):
+        spawncamp.append(Enemy())
+    #enemy = Enemy()  # Reset enemy by creating a new enemy
+    score = 0  # Reset score
+
+
+# Function to display "You Died" message and a countdown to restart
+def display_you_died_and_restart(screen):
+    for i in range(5, 0, -1):  # Countdown from 5 to 1
+        screen.fill((0, 0, 0))  # Clear the screen
+        text = font.render(f'You Died! Restarting in {i}...', True, (255, 0, 0))
+        screen.blit(text, (width // 2 - 150, height // 2))  # Display centered message
+        pygame.display.flip()  # Update the screen
+        time.sleep(1)  # Wait for 1 second
+    reset_game()  # Reset the game after countdown
+
+
+# Function to display the current score on the screen
+def display_score(screen, score):
+    score_text = font.render(f'Score: {score}', True, (255, 255, 255))
+    screen.blit(score_text, (10, 10))  # Display score in the top-left corner
+    
+# Define player's initial position at the center of the screen
+player_x = width // 2
+player_y = height // 2
+time_since_last_score_increase = 0  # Track time to increase score every second
+
+
 
 ### Main Game Loop ###
 while running:
@@ -128,11 +164,14 @@ while running:
     player_rect = update_player_movement()
     
     # Move the enemy towards the player
-    enemy.move_towards_player(player_rect)
-
+    for i in range(num_of_enemies):
+        spawncamp[i].move_towards_player(player_rect)
+    #enemy.move_towards_player(player_rect)
+    #enemy2.move_towards_player(player_rect)
     # Check for collision between player and enemy
-    collision1 = player_rect.colliderect(enemy.rect)
-
+    for i in range(num_of_enemies):
+        collision1 = player_rect.colliderect(spawncamp[i].rect)
+        
   
 
     # Fill the background with black
@@ -145,13 +184,34 @@ while running:
     screen.blit(player_image, player_rect)
 
     # Draw the enemy on the screen
-    enemy.draw(screen)
+    for i in range(num_of_enemies):
+        spawncamp[i].draw(screen)
+    #enemy.draw(screen)
+    #enemy2.draw(screen)
+        
+    # If no collision occurs, increase the score every second
+    if not collision1:
+        time_since_last_score_increase += clock.get_time()  # Track the time since last score increase
+        if time_since_last_score_increase > 1000:  # 1000 ms = 1 second
+            score += 1  # Increase the score by 1
+            time_since_last_score_increase = 0  # Reset the timer
+
+
+    # If collision occurs, show "You Died" and restart after 5 seconds
+    if collision1:
+        display_you_died_and_restart(screen)
+
+# Display the current score
+    display_score(screen, score)
+
+
 
     # If a collision occurs, display a message on the screen
+    '''
     if collision1:
         text = font.render('Collision Occurred!', True, (255, 255, 255))
         screen.blit(text, (10, 10))
-
+    '''
     # Update the display
     pygame.display.flip()
 
