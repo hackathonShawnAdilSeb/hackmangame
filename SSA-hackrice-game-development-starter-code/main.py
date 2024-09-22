@@ -98,38 +98,45 @@ enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
 player_rect = player_image.get_rect()
 
 
-
-def spawn_mud_randomly():
+def spawn_mud_randomly(tree_rect):
     max_x = width - mud_size[0]  # Maximum x-coordinate (screen width - mud width)
     max_y = height - mud_size[1]  # Maximum y-coordinate (screen height - mud height)
     
-    random_x = random.randint(0, max_x)
-    random_y = random.randint(0, max_y)
-    
-    return pygame.Rect(random_x, random_y, mud_size[0], mud_size[1])
+    while True:  
+        random_x = random.randint(0, max_x)
+        random_y = random.randint(0, max_y)
+        mud_rect = pygame.Rect(random_x, random_y, mud_size[0], mud_size[1])
+        
+        if not mud_rect.colliderect(tree_rect): 
+            return mud_rect
 
-def spawn_tree_randomly():
+
+def spawn_tree_randomly(mud_rect):
     max_x = width - tree_size[0]
-    max_y = height - tree_size[1]  
+    max_y = height - tree_size[1]
 
-    random_x = random.randint(0, max_x)
-    random_y = random.randint(0, max_y)
-
-    return pygame.Rect(random_x, random_y, tree_size[0], tree_size[1])
-
+    while True: 
+        random_x = random.randint(0, max_x)
+        random_y = random.randint(0, max_y)
+        tree_rect = pygame.Rect(random_x, random_y, tree_size[0], tree_size[1])
+        
+        if not tree_rect.colliderect(mud_rect):  
+            return tree_rect
+        
 #mud
 mud_size = (100, 100)  # Set new size for the mud (width, height)
 mud_image = pygame.image.load(os.path.join('mud3.png')).convert_alpha()
 mud_image = pygame.transform.scale(mud_image, mud_size)
 mud_mask = pygame.mask.from_surface(mud_image)
-mud_rect = spawn_mud_randomly()
+mud_rect = spawn_mud_randomly(pygame.Rect(0, 0, 0, 0))
 
 #tree
-tree_size = (100, 100)
+tree_size = (150, 150)
 tree_image = pygame.image.load(os.path.join('tree.png')).convert_alpha()
 tree_image = pygame.transform.scale(tree_image, tree_size)
 tree_mask = pygame.mask.from_surface(tree_image)
-tree_rect = spawn_tree_randomly()
+tree_rect = spawn_tree_randomly(mud_rect)
+
 
 
 
@@ -211,8 +218,8 @@ def main_menu():
         
 main_menu()
 
-mud_rect = spawn_mud_randomly()
-tree_rect = spawn_tree_randomly()
+mud_rect = spawn_mud_randomly(tree_rect)
+tree_rect = spawn_tree_randomly(mud_rect)
 
 # Enemy Class to handle enemies ###
 class Enemy:
@@ -257,7 +264,8 @@ class Enemy:
                     self.rect.x += overlap_direction.x * self.speed
                     self.rect.y += overlap_direction.y * self.speed
                     
-    
+    def draw(self, screen):
+        screen.blit(enemy_image, self.rect)
 
 
 # Create an object to help track time (FPS control)
@@ -281,11 +289,12 @@ player_hitbox = pygame.Rect(
     player_hitbox_size
 )
 
-tree_hitbox_reduction = 25
-tree_hitbox_size = (tree_size[0] - tree_hitbox_reduction, tree_size[1] - tree_hitbox_reduction)
+tree_hitbox_reduction_height = 40
+tree_hitbox_reduction_width = 75
+tree_hitbox_size = (tree_size[0] - tree_hitbox_reduction_width, tree_size[1] - tree_hitbox_reduction_height)
 tree_hitbox = pygame.Rect(
-    tree_rect.x + tree_hitbox_reduction // 2,  # Offset the hitbox to the center
-    tree_rect.y + tree_hitbox_reduction // 2,  
+    tree_rect.x + tree_hitbox_reduction_width // 2,  # Offset the hitbox to the center
+    tree_rect.y + tree_hitbox_reduction_height // 2,  
     tree_hitbox_size[0], 
     tree_hitbox_size[1]
 )
@@ -363,7 +372,7 @@ def update_player_movement():
 
 # Function to reset the game state (score, enemy and player position)
 def reset_game():
-    global player_x, player_y, score, mud_rect, mud_mask, tree_rect, tree_mask
+    global player_x, player_y, score, enemy, mud_rect, mud_mask, tree_rect, tree_mask
     player_x = width // 2  # Reset player position to the center of the screen
     player_y = height // 2
     spawncamp.clear()
@@ -372,9 +381,9 @@ def reset_game():
    
     score = 0  # Reset score
 
-    mud_rect = spawn_mud_randomly()
+    mud_rect = spawn_mud_randomly(tree_rect)
     mud_mask = pygame.mask.from_surface(mud_image)
-    tree_rect = spawn_tree_randomly()
+    tree_rect = spawn_tree_randomly(mud_rect)
     tree_mask = pygame.mask.from_surface(tree_image)
 
 
@@ -508,10 +517,6 @@ while running:
                 (player_size, player_size)
             )
     # Reset the mud collision timer
-
-    
-
-
 
     # If collision occurs, show "You Died" and restart after 5 seconds
     if collision1:
