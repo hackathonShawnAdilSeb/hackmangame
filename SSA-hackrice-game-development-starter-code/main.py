@@ -15,7 +15,7 @@ pygame.init()
 
 # Define game variables
 player_size = 100
-bullet_size= 30
+bullet_size= 80
 enemy_size = 40
 player_speed = 8
 width = 800
@@ -218,6 +218,7 @@ main_menu()
 
 
 
+
 # Enemy Class to handle enemies ###
 class Enemy:
     def __init__(self):
@@ -254,10 +255,10 @@ class Enemy:
         self.rect.y = max(0, min(height - enemy_size, self.rect.y))
 
     def move_away_from_other_enemies(self, enemies):
-        if not self.alive:  # Do not move if dead
+        if not self.alive:
             return
         for other_enemy in enemies:
-            if other_enemy != self:  # Check that we're not comparing the enemy with itself
+            if other_enemy != self and other_enemy.alive:  # Check only against alive enemies
                 if self.rect.colliderect(other_enemy.rect):  # If there's a collision
                     # Move this enemy away from the other enemy
                     overlap_direction = pygame.Vector2(self.rect.center) - pygame.Vector2(other_enemy.rect.center)
@@ -303,14 +304,14 @@ tree_hitbox = pygame.Rect(
     tree_hitbox_size[1]
 )
 
+bullet_active = False
 
-def fire_bullet(x,y):
-    global bullet_state,bullet_dir, bullet_x, bullet_y
-    bullet_state="fire"
-    bullet_dir="neutral"
+def fire_bullet(x, y):
+    global bullet_active, bullet_x, bullet_y
+    bullet_active = True
     bullet_x = x + player_size // 2 - bullet_size // 2
     bullet_y = y
-    screen.blit(bullet_image, (bullet_x,bullet_y))
+    screen.blit(bullet_image, (bullet_x, bullet_y))
 
 # Function to update player movement based on WASD keys
 def update_player_movement():
@@ -370,6 +371,8 @@ def update_player_movement():
         # Reset player position if collision is detected
         player_x = original_x
         player_y = original_y
+    
+
 
     # Update and return the player's rectangle for further processing (like collision detection)
     return pygame.Rect(player_x, player_y, player_size, player_size), player_hitbox
@@ -379,8 +382,10 @@ def update_player_movement():
 # Function to reset the game state (score, enemy and player position)
 def reset_game():
     global player_x, player_y, score, enemy, mud_rect, mud_mask, tree_rect, tree_mask, tree_hitbox
-    player_x = width // 2  # Reset player position to the center of the screen
-    player_y = height // 2
+
+    player_x = width // 2 - player_size // 2
+    player_y = height // 2 - player_size // 2
+
     num_of_enemies = level * 3
     spawncamp.clear()
     for i in range(num_of_enemies):
@@ -399,15 +404,6 @@ def reset_game():
         tree_hitbox_size[0],
         tree_hitbox_size[1]
     )
-
-    while True:
-        player_x = random.randint(0, width - player_size)
-        player_y = random.randint(0, height - player_size)
-        player_rect = pygame.Rect(player_x, player_y, player_size, player_size)
-
-        # Check collisions with mud and tree
-        if not player_rect.colliderect(mud_rect) and not player_rect.colliderect(tree_rect):
-            break  # Exit the loop if the position is valid
 
     # Update the player's hitbox after positioning
     player_hitbox = pygame.Rect(
@@ -455,6 +451,8 @@ player_mask = create_player_mask(player_image, player_size, player_x, player_y)
 
 # Function to display level-up announcement
 def display_level_change(screen, level):
+    screen.fill((0, 0, 0))
+    reset_game()
     level_text = font.render(f'Level {level}', True, (255, 255, 0))  # Yellow color for level change announcement
     screen.blit(level_text, (width // 2 - 50, height // 2))
     pygame.display.flip()
@@ -496,10 +494,12 @@ while running:
         bullet_dir = "right" if keys[pygame.K_RIGHT] else "left"
 
     for enemy in spawncamp:
-        if enemy.alive and enemy.rect.colliderect(pygame.Rect(bullet_x, bullet_y, bullet_size, bullet_size)):  # Check if enemy is alive
-            enemy.kill()  # Mark the enemy as dead
-            bullet_state = "ready"  # Reset bullet state
-            break
+        if enemy.alive and bullet_active:
+            bullet_rect = pygame.Rect(bullet_x, bullet_y, bullet_size, bullet_size)
+            if enemy.rect.colliderect(bullet_rect):
+                enemy.kill()  # Mark the enemy as dead
+                bullet_active = False  # Reset bullet state
+                break  # Exit the loop after the bullet hits one ghost    
 
     for enemy in spawncamp:
         if enemy.alive:  # Only move if the enemy is alive
@@ -621,16 +621,23 @@ while running:
     display_score(screen, score)
     display_level(screen, level)
 
-    if bullet_state is "fire":
-        screen.blit(bullet_image, (bullet_x, bullet_y))
-        if bullet_dir is "right":
+    if bullet_active:
+        if bullet_dir == "right":
             bullet_x += bulletx_change
-            if bullet_x > width: 
-                bullet_state = "ready"
-        if bullet_dir is "left":
+            if bullet_x > width:  # Off-screen check
+                bullet_active = False
+        elif bullet_dir == "left":
             bullet_x -= bulletx_change
-            if bullet_x < 0:  # Reset the bullet once it goes off screen
-                bullet_state = "ready"
+            if bullet_x < 0:  # Off-screen check
+                bullet_active = False
+
+    if bullet_active:
+        screen.blit(bullet_image, (bullet_x, bullet_y))
+
+    if bullet_active:
+        if bullet_rect.colliderect(tree_hitbox):
+            bullet_active = False
+    
        
     # If a collision occurs, display a message on the screen
     '''
