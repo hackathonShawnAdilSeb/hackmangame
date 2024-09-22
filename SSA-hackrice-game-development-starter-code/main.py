@@ -108,6 +108,14 @@ def spawn_mud_randomly():
     
     return pygame.Rect(random_x, random_y, mud_size[0], mud_size[1])
 
+def spawn_tree_randomly():
+    max_x = width - tree_size[0]
+    max_y = height - tree_size[1]  
+
+    random_x = random.randint(0, max_x)
+    random_y = random.randint(0, max_y)
+
+    return pygame.Rect(random_x, random_y, tree_size[0], tree_size[1])
 
 #mud
 mud_size = (100, 100)  # Set new size for the mud (width, height)
@@ -119,9 +127,12 @@ mud_rect = spawn_mud_randomly()
 #tree
 tree_size = (100, 100)
 tree_image = pygame.image.load(os.path.join('tree.png')).convert_alpha()
-tree_image = pygame.mask.from_surface(tree_image)
+tree_image = pygame.transform.scale(tree_image, tree_size)
 tree_mask = pygame.mask.from_surface(tree_image)
 tree_rect = spawn_tree_randomly()
+
+
+
 
 def create_player_mask(player_image, player_size, player_x, player_y):
 
