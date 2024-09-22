@@ -215,6 +215,25 @@ def main_menu():
 
         
 main_menu()
+#portal class
+# Portal Class with Image
+class Portal:
+    def __init__(self, x, y, width, height, target_x, target_y):
+        self.rect = pygame.Rect(x, y, width, height)  # Position and size of portal
+        try:
+            self.image = pygame.image.load('portal.png').convert_alpha()  # Load the portal image
+            self.image = pygame.transform.scale(self.image, (width, height))  # Scale the image to the desired size
+        except pygame.error as e:
+            print(f"Error loading portal image: {e}")  # Debug print for loading issues
+            self.image = pygame.Surface((width, height))  # Fallback to a placeholder surface
+            self.image.fill((0, 0, 255))  # Blue color for fallback
+
+        self.target_x = target_x  # Where the portal teleports the player (x-coordinate)
+        self.target_y = target_y  # Where the portal teleports the player (y-coordinate)
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)  # Draw the portal image on the screen
+
 
 
 # Enemy Class to handle enemies ###
@@ -440,6 +459,8 @@ time_since_last_score_increase = 0  # Track time to increase score every second
 
 player_mask = create_player_mask(player_image, player_size, player_x, player_y)
 
+
+
 # Function to display level-up announcement
 def display_level_change(screen, level):
     screen.fill((0, 0, 0))
@@ -465,6 +486,9 @@ tree_hitbox = pygame.Rect(
     tree_hitbox_size[0],
     tree_hitbox_size[1]
 )
+portals = []
+portals.append(Portal(100, 150, 50, 50, 500, 400))  
+portals.append(Portal(300, 450, 50, 50, 100, 100))  
 
 ### Main Game Loop ###
 while running:
@@ -479,6 +503,8 @@ while running:
     # Update player position based on movement input
     player_rect, player_hitbox = update_player_movement()
 
+    for portal in portals:
+        portal.draw(screen)  # Draw each portal on the screen
 
     if (keys[pygame.K_RIGHT] or keys[pygame.K_LEFT]) and bullet_state == "ready":
         fire_bullet(player_x, player_y)
@@ -521,7 +547,12 @@ while running:
     mud_collision = mud_mask.overlap(player_mask, (offset_x, offset_y))
 
 
-    
+    for portal in portals:
+        if player_rect.colliderect(portal.rect):  # If player collides with the portal
+            player_x = portal.target_x  # Teleport player to the target position
+            player_y = portal.target_y
+            player_rect.topleft = (player_x, player_y)  # Update the player's rectangle position
+
     # Fill the background with black
     screen.fill((0, 0, 0))
 
@@ -536,6 +567,8 @@ while running:
     #set background
     screen.blit(background, (0,0))
     
+    for portal in portals:
+        portal.draw(screen)
     # Draw stuff on the screen
     screen.blit(mud_image, mud_rect)
     screen.blit(player_image, player_rect)
