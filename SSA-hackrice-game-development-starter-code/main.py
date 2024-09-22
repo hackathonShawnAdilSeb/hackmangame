@@ -21,7 +21,10 @@ player_speed = 8
 width = 800
 height = 600
 score = 0 
-
+player_teleport_cooldown_time = 3000  # 3 seconds cooldown between teleports
+disable_portal_time = 1000  # 1 second of disabled portal detection
+last_player_teleport_time = 0  # Timestamp of the last teleport
+player_can_teleport = True  # To control if the player can teleport
 #bullet
 
 bullet_x = 0
@@ -77,6 +80,7 @@ height = 600
 score = 0 
 level = 1
 level_score_update = 5
+
 # Initialize the font variable for the game
 font = pygame.font.Font(None, 36)
 
@@ -154,6 +158,11 @@ def draw_text(text, font, color, surface, x, y):
 
 player_x = width // 2
 player_y = height // 2
+# Player teleportation variables
+player_can_teleport = True
+player_teleport_cooldown_time = 10000  # 500ms cooldown between teleportation
+last_player_teleport_time = 0
+
 
 def main_menu():
    
@@ -216,9 +225,8 @@ def main_menu():
         
 main_menu()
 #portal class
-# Portal Class with Image
 class Portal:
-    def __init__(self, x, y, width, height, target_x, target_y):
+    def __init__(self, x, y, width, height, target_x, target_y, cooldown_time=4000):
         self.rect = pygame.Rect(x, y, width, height)  # Position and size of portal
         try:
             self.image = pygame.image.load('portal.png').convert_alpha()  # Load the portal image
@@ -230,9 +238,143 @@ class Portal:
 
         self.target_x = target_x  # Where the portal teleports the player (x-coordinate)
         self.target_y = target_y  # Where the portal teleports the player (y-coordinate)
+        self.cooldown_time = cooldown_time  # Cooldown duration in milliseconds (default 4000ms = 4 seconds)
+        self.last_used_time = 0  # Timestamp of the last time the portal was used
 
     def draw(self, screen):
-        screen.blit(self.image, self.rect)  # Draw the portal image on the screen
+        # Draw the portal image at the exact position of the rect
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+    def can_teleport(self):
+        """Check if enough time has passed to allow teleportation"""
+        current_time = pygame.time.get_ticks()
+        return current_time - self.last_used_time >= self.cooldown_time
+
+    def use(self):
+        """Register portal usage by updating the last used time"""
+        self.last_used_time = pygame.time.get_ticks()
+
+    def teleport(self, player_rect):
+        """Teleport the player to the target location and apply a safe offset"""
+        safe_offset = 100  # Safe offset to ensure the player doesn't collide with the portal exit
+        player_x = self.target_x
+        player_y = self.target_y
+
+        # Ensure the player is moved away from the edge after teleportation
+        if self.target_x < safe_offset:  # Left edge
+            player_x += safe_offset
+        elif self.target_x > width - safe_offset:  # Right edge
+            player_x -= safe_offset
+        
+        if self.target_y < safe_offset:  # Top edge
+            player_y += safe_offset
+        elif self.target_y > height - safe_offset:  # Bottom edge
+            player_y -= safe_offset
+
+        # Update the player's position
+        player_rect.topleft = (player_x, player_y)
+
+        # Register portal usage
+        self.use()
+
+def randomize_portal_positions():
+    """Randomize the positions of both portals at the edges."""
+    portal_width, portal_height = 50, 50
+
+    # Helper function to pick a random edge position
+    def pick_edge_position():
+        edge = random.choice(['top', 'bottom', 'left', 'right'])
+        if edge == 'top':
+            return random.randint(0, width - portal_width), 0
+        elif edge == 'bottom':
+            return random.randint(0, width - portal_width), height - portal_height
+        elif edge == 'left':
+            return 0, random.randint(0, height - portal_height)
+        elif edge == 'right':
+            return width - portal_width, random.randint(0, height - portal_height)
+
+    # Randomize entry and exit portal positions
+    portal1_x, portal1_y = pick_edge_position()
+    portal2_x, portal2_y = pick_edge_position()
+
+    # Ensure the entry and exit portals are not too close to each other
+    while abs(portal1_x - portal2_x) < 150 and abs(portal1_y - portal2_y) < 150:
+        portal2_x, portal2_y = pick_edge_position()
+
+    # Create two connected portals
+    portal1 = Portal(portal1_x, portal1_y, portal_width, portal_height, portal2_x, portal2_y)
+    portal2 = Portal(portal2_x, portal2_y, portal_width, portal_height, portal1_x, portal1_y)
+
+    return [portal1, portal2]
+
+
+    # Helper function to pick a random edge position
+    def pick_edge_position():
+        edge = random.choice(['top', 'bottom', 'left', 'right'])
+        if edge == 'top':
+            return random.randint(0, width - portal_width), 0
+        elif edge == 'bottom':
+            return random.randint(0, width - portal_width), height - portal_height
+        elif edge == 'left':
+            return 0, random.randint(0, height - portal_height)
+        elif edge == 'right':
+            return width - portal_width, random.randint(0, height - portal_height)
+
+    # Randomize entry and exit portal positions
+    portal1_x, portal1_y = pick_edge_position()
+    portal2_x, portal2_y = pick_edge_position()
+
+    # Ensure the entry and exit portals are not too close to each other
+    while abs(portal1_x - portal2_x) < 150 and abs(portal1_y - portal2_y) < 150:
+        portal2_x, portal2_y = pick_edge_position()
+
+    # Create two connected portals
+    portal1 = Portal(portal1_x, portal1_y, portal_width, portal_height, portal2_x, portal2_y)
+    portal2 = Portal(portal2_x, portal2_y, portal_width, portal_height, portal1_x, portal1_y)
+
+    return [portal1, portal2]
+
+# Function to handle portal teleportation logic
+# Function to handle teleportation on key press and cooldown
+def handle_portal_teleportation(player_rect):
+    global player_can_teleport, last_player_teleport_time, player_x, player_y
+
+    current_time = pygame.time.get_ticks()
+
+    # Check if teleportation is disabled due to cooldown
+    if not player_can_teleport and current_time - last_player_teleport_time < player_teleport_cooldown_time:
+        return  # Do not teleport if still in cooldown
+
+    # If "E" is pressed, check for collision with any portal
+    for portal in portals:
+        if player_rect.colliderect(portal.rect):
+            # Teleport the player to the target location with a safe offset
+            player_x = portal.target_x
+            player_y = portal.target_y
+
+            # Apply a larger safe offset to prevent immediate re-collision
+            safe_offset_x = 100  # Horizontal safe offset
+            safe_offset_y = 100  # Vertical safe offset
+
+            if portal.target_x < safe_offset_x:  # Near the left edge
+                player_x += safe_offset_x
+            elif portal.target_x > width - safe_offset_x:  # Near the right edge
+                player_x -= safe_offset_x
+
+            if portal.target_y < safe_offset_y:  # Near the top edge
+                player_y += safe_offset_y
+            elif portal.target_y > height - safe_offset_y:  # Near the bottom edge
+                player_y -= safe_offset_y
+
+            # Update the player's rect to the new position
+            player_rect.topleft = (player_x, player_y)
+
+            # Register teleportation and start the cooldown
+            player_can_teleport = False
+            last_player_teleport_time = current_time
+            break  # Only teleport once
+
+
 
 
 
@@ -397,8 +539,9 @@ def update_player_movement():
 
 
 # Function to reset the game state (score, enemy and player position)
+# Function to reset the game state (score, enemy and player position)
 def reset_game():
-    global player_x, player_y, score, enemy, mud_rect, mud_mask, tree_rect, tree_mask, tree_hitbox
+    global player_x, player_y, score, enemy, mud_rect, mud_mask, tree_rect, tree_mask, tree_hitbox, portals
 
     player_x = width // 2 - player_size // 2
     player_y = height // 2 - player_size // 2
@@ -430,6 +573,14 @@ def reset_game():
         tree_hitbox_size[1]
     )
 
+    # Randomize the portal positions
+    portals = randomize_portal_positions()
+
+
+    # Randomize the portal positions
+    portals = randomize_portal_positions()
+
+
 
 # Function to display "You Died" message and a countdown to restart
 def display_you_died_and_restart(screen):
@@ -450,6 +601,9 @@ def display_score(screen, score):
 def display_level(screen, level):
     level_text = font.render(f'Level: {level}', True, (255, 255, 255))
     screen.blit(level_text, (10, 40))
+# Debugging: Show teleport cooldown
+cooldown_text = font.render(f"Can Teleport: {player_can_teleport}", True, (255, 255, 255))
+screen.blit(cooldown_text, (10, 70))
 
 # Define player's initial position at the center of the screen
 player_x = width // 2
@@ -499,6 +653,10 @@ while running:
         # Quit the game if the user closes the window
         if event.type == pygame.QUIT:
             running = False
+    # Teleportation triggered by key press
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_e]:  # Press 'E' to teleport
+        handle_portal_teleportation(player_rect)  # Handle teleportation logic
 
     # Update player position based on movement input
     player_rect, player_hitbox = update_player_movement()
@@ -563,6 +721,11 @@ while running:
         level += 1  # Increase the level
         reset_game()
         display_level_change(screen, level)
+
+    handle_portal_teleportation(player_rect)
+    # After teleportation, check if the cooldown has passed to allow teleportation again
+    if pygame.time.get_ticks() - last_player_teleport_time > disable_portal_time:
+        player_can_teleport = True
 
     #set background
     screen.blit(background, (0,0))
@@ -663,7 +826,7 @@ while running:
         if bullet_rect.colliderect(tree_hitbox):
             bullet_active = False
     
-       
+    
     # If a collision occurs, display a message on the screen
     '''
     if collision1:
