@@ -400,25 +400,42 @@ while running:
             score += 1  # Increase the score by 1
             time_since_last_score_increase = 0  # Reset the timer
 
-    mud_slowdown_duration = 2000  # Slowdown lasts for 2 seconds
+    # Initialize variables
     mud_collision_time = None  # Track when the player enters the mud
+    mud_slowdown_duration = 3000  # Slowdown lasts for 3 seconds (3000 milliseconds)
+    in_mud = False
 
     # Inside the main game loop where you handle the mud collision:
+    # Handle mud collision and slowdown
     if mud_collision:
-        if mud_collision_time is None:  # If the player just collided with the mud
-            mud_collision_time = pygame.time.get_ticks()  
-            player_image = pygame.transform.scale(
-            pygame.image.load(os.path.join('mud_goat.png')).convert_alpha(),
-            (player_size, player_size)
-        )
+        if not in_mud:  # Player just collided with the mud
+            in_mud = True
+            mud_collision_time = pygame.time.get_ticks()  # Track the time the player enters the mud
             player_speed = 1.5  # Slow down the player
+            player_image = pygame.transform.scale(
+                pygame.image.load(os.path.join('mud_goat.png')).convert_alpha(),
+                (player_size, player_size)
+            )
+    else:
+        in_mud = False  # Player is not in mud anymore
+  # Slow down the player
 
     # Check if enough time has passed to restore the speed
-    if mud_collision_time is not None:
+    # Check if enough time has passed to restore the player's speed
+    if in_mud and mud_collision_time is not None:
         current_time = pygame.time.get_ticks()
-        if current_time - mud_collision_time > mud_slowdown_duration:  # Check if 2 seconds have passed
-            player_speed = 3  # Restore player speed
-            mud_collision_time = None
+        if current_time - mud_collision_time > mud_slowdown_duration:  # If 3 seconds passed
+            player_speed = 3  # Restore the player's speed
+            player_image = pygame.transform.scale(
+                pygame.image.load(os.path.join('goat.png')).convert_alpha(),
+                (player_size, player_size)
+            )
+            mud_collision_time = None 
+    # If the player exits the mud, ensure the speed returns to normal
+    if not in_mud and mud_collision_time is None:
+        player_speed = 3  # Restore player speed immediately if out of mud
+    # Reset the mud collision timer
+
     
 
 
