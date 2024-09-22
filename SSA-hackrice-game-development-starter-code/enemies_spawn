@@ -19,6 +19,7 @@ player_speed = 3
 width = 800
 height = 600
 
+
 # Initialize the font variable for the game
 font = pygame.font.Font(None, 36)
 
@@ -27,6 +28,8 @@ screen = pygame.display.set_mode((width, height))
 
 # Set the current screen caption
 pygame.display.set_caption('Collision Detection Example')
+
+background=pygame.image.load('customgrass.png')
 
 # Load the player image
 player_image = pygame.image.load(os.path.join('goat.png')).convert_alpha()
@@ -135,6 +138,9 @@ while running:
     # Fill the background with black
     screen.fill((0, 0, 0))
 
+    #set background
+    screen.blit(background, (0,0))
+    
     # Draw the player on the screen
     screen.blit(player_image, player_rect)
 
