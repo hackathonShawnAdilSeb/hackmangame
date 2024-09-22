@@ -4,6 +4,7 @@ import sys
 import os 
 import random
 import time
+import math
 
 # Ensure the working directory is the script's directory
 abspath = os.path.abspath(__file__)
@@ -44,11 +45,12 @@ background=pygame.image.load('customgrass.png')
 
 # Load the player image
 bullet_image = pygame.image.load(os.path.join('bullet.png')).convert_alpha()
+bullet_image2 = pygame.image.load(os.path.join('boss_bullet.png')).convert_alpha()
 player_image = pygame.image.load(os.path.join('goat.png')).convert_alpha()
 enemy_image = pygame.image.load(os.path.join('ghost.png')).convert_alpha()
 # Scale the player image to the desired size
 bullet_image = pygame.transform.scale(bullet_image, (bullet_size, bullet_size))
-player_image = pygame.transform.scale(player_image, (player_size, player_size))
+bullet_image2 = pygame.transform.scale(bullet_image2, (bullet_size - 50, bullet_size - 50))
 enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
 # Get the rectangle for the player image
 player_rect = player_image.get_rect()
@@ -75,6 +77,11 @@ player_speed = 8
 width = 800
 height = 600
 score = 0 
+boss_bullets = []
+boss_bullet_size = 5
+boss_shoot_timer = 0
+boss_shoot_interval = 60
+boss_size = 100
 level = 1
 level_score_update = 5
 # Initialize the font variable for the game
@@ -92,10 +99,11 @@ background=pygame.image.load('customgrass.png')
 # Load the player image
 player_image = pygame.image.load(os.path.join('goat.png')).convert_alpha()
 enemy_image = pygame.image.load(os.path.join('ghost.png')).convert_alpha()
+boss_image = pygame.image.load(os.path.join('boss.png')).convert_alpha()
 # Scale the player image to the desired size
 player_image = pygame.transform.scale(player_image, (player_size, player_size))
 enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
-# Get the rectangle for the player image
+boss_image = pygame.transform.scale(boss_image, (boss_size, boss_size))
 player_rect = player_image.get_rect()
 
 
@@ -234,7 +242,96 @@ class Portal:
     def draw(self, screen):
         screen.blit(self.image, self.rect)  # Draw the portal image on the screen
 
+class Boss:
+   def __init__(self):
+       self.image = pygame.transform.scale(pygame.image.load(os.path.join('boss.png')).convert_alpha(), (enemy_size, enemy_size))
+       self.rect = self.image.get_rect(center=(width // 2, height // 2))
+       self.alive = True
+       self.bullet_timer = 0
+       self.bullet_interval = 6000  # 1 second
+       self.bullets = []
+       self.speed = 1
+       self.health = 5  # Boss starts with 5 health points
 
+
+   def take_damage(self):
+        self.health -= 1
+        if self.health <= 0:
+            self.alive = False
+
+   def move_towards_player(self, player_rect):
+       if not self.alive:
+           return
+       # Calculate the direction vector towards the player
+       direction = pygame.Vector2(player_rect.center) - pygame.Vector2(self.rect.center)
+       if direction.length() != 0:
+           direction = direction.normalize()  # Normalize direction vector for consistent speed
+       # Update the enemy's position to move towards the player
+       self.rect.x += direction.x * self.speed
+       self.rect.y += direction.y * self.speed
+       self.rect.x = max(0, min(width - boss_size, self.rect.x))
+       self.rect.y = max(0, min(height - boss_size, self.rect.y))
+
+
+   def move_away_from_other_enemies(self, enemies):
+       if not self.alive:
+           return
+       for other_enemy in enemies:
+           if other_enemy != self and other_enemy.alive:  # Check only against alive enemies
+               if self.rect.colliderect(other_enemy.rect):  # If there's a collision
+                   # Move this enemy away from the other enemy
+                   overlap_direction = pygame.Vector2(self.rect.center) - pygame.Vector2(other_enemy.rect.center)
+                   if overlap_direction.length() != 0:
+                       overlap_direction = overlap_direction.normalize()  # Normalize direction
+                   self.rect.x += overlap_direction.x * self.speed
+                   self.rect.y += overlap_direction.y * self.speed
+      
+
+
+   def shoot_bullets(self):
+       if self.alive:
+           # Shoot bullets in a circular pattern
+           for angle in range(0, 360, 45):  # Adjust angle step for more or fewer bullets
+               bullet_speed = 5
+               bullet_dx = bullet_speed * math.cos(math.radians(angle))
+               bullet_dy = bullet_speed * math.sin(math.radians(angle))
+               self.bullets.append(Bullet(self.rect.centerx, self.rect.centery, bullet_dx, bullet_dy))
+
+
+   def update(self):
+       # Update bullet positions
+       for bullet in self.bullets:
+           bullet.update()
+           if bullet.is_off_screen():
+               self.bullets.remove(bullet)
+
+
+   def draw(self, screen):
+       if self.alive:
+           screen.blit(self.image, self.rect)
+           for bullet in self.bullets:
+               bullet.draw(screen)
+              
+
+
+class Bullet:
+   def __init__(self, x, y, dx, dy):
+       self.rect = pygame.Rect(x, y, bullet_size // 2, bullet_size // 2)  # Smaller size for bullets
+       self.dx = dx
+       self.dy = dy
+
+
+   def update(self):
+       self.rect.x += self.dx
+       self.rect.y += self.dy
+
+
+   def is_off_screen(self):
+       return self.rect.x < 0 or self.rect.x > width or self.rect.y < 0 or self.rect.y > height
+
+
+   def draw(self, screen):
+       screen.blit(bullet_image2, self.rect)
 
 # Enemy Class to handle enemies ###
 class Enemy:
@@ -396,9 +493,10 @@ def update_player_movement():
 
 
 
+
 # Function to reset the game state (score, enemy and player position)
 def reset_game():
-    global player_x, player_y, score, enemy, mud_rect, mud_mask, tree_rect, tree_mask, tree_hitbox
+    global player_x, player_y, score, enemy, mud_rect, mud_mask, tree_rect, tree_mask, tree_hitbox, boss
 
     player_x = width // 2 - player_size // 2
     player_y = height // 2 - player_size // 2
@@ -409,6 +507,8 @@ def reset_game():
         spawncamp.append(Enemy())
    
     score = 0  # Reset score
+    boss = Boss()
+
 
     mud_rect = spawn_mud_randomly(tree_rect)
     mud_mask = pygame.mask.from_surface(mud_image)
@@ -440,6 +540,16 @@ def display_you_died_and_restart(screen):
         pygame.display.flip()  # Update the screen
         time.sleep(1)  # Wait for 1 second
     reset_game()  # Reset the game after countdown
+
+def winner(screen):
+    screen.fill((255, 255, 255))
+    if spawncamp:  # Ensure spawncamp is not empty before clearing
+        spawncamp.clear()
+    text = font.render(f'CONGRATS YOU WON!', True, (0, 255, 255))
+    screen.blit(text, (width // 2 - 150, height // 2))
+    pygame.display.flip()
+    
+
 
 
 # Function to display the current score on the screen
@@ -490,6 +600,8 @@ portals = []
 portals.append(Portal(100, 150, 50, 50, 500, 400))  
 portals.append(Portal(300, 450, 50, 50, 100, 100))  
 
+boss = Boss()
+
 ### Main Game Loop ###
 while running:
 
@@ -499,6 +611,11 @@ while running:
         # Quit the game if the user closes the window
         if event.type == pygame.QUIT:
             running = False
+
+    for bullet in boss.bullets:
+       if bullet.rect.colliderect(player_hitbox):
+           # Handle player getting hit by boss bullets
+           display_you_died_and_restart(screen)
 
     # Update player position based on movement input
     player_rect, player_hitbox = update_player_movement()
@@ -526,12 +643,14 @@ while running:
 
     # Check if all enemies are dead
     all_enemies_dead = all(not enemy.alive for enemy in spawncamp)
+    boss_dead = not boss.alive
 
 # If all enemies are dead, increase the level and reset the game
-    if all_enemies_dead:
-        level += 1
-        reset_game()  # Reset the game state for the new level
-        display_level_change(screen, level)
+    if level < 2:
+        if all_enemies_dead:
+            level += 1
+            reset_game()  # Reset the game state for the new level
+            display_level_change(screen, level)
 
     # Move the enemy towards the player
     for i in range(num_of_enemies):
@@ -559,11 +678,6 @@ while running:
     for enemy in spawncamp:
         enemy.draw(screen)
 
-    if score >= 30:
-        level += 1  # Increase the level
-        reset_game()
-        display_level_change(screen, level)
-
     #set background
     screen.blit(background, (0,0))
     
@@ -581,6 +695,31 @@ while running:
         spawncamp[i].draw(screen)
     #enemy.draw(screen)
     #enemy2.draw(screen)
+    if level >= 2:
+        if not boss.alive:  # Check if the boss is dead
+            boss = Boss()  # Create a new boss instance
+            boss.alive = True  # Set boss as alive
+
+        if boss.alive:
+            boss.draw(screen)
+            boss.move_towards_player(player_rect)
+            boss.move_away_from_other_enemies(spawncamp)
+            boss.bullet_timer += clock.get_time()
+            if boss.bullet_timer > boss.bullet_interval:
+                boss.shoot_bullets()
+                boss.bullet_timer = 0
+            boss.update()
+
+            # Check if player's bullet hits the boss
+            if bullet_active:
+                bullet_rect = pygame.Rect(bullet_x, bullet_y, bullet_size, bullet_size)
+                if boss.rect.colliderect(bullet_rect):
+                    boss.take_damage()  # Call the take_damage method
+                    bullet_active = False  # Reset bullet state
+
+            # Check if the boss has been defeated
+            if not boss.alive:
+                winner(screen)  # Reset game state
 
     collision1 = False
     for enemy in spawncamp:
@@ -589,7 +728,7 @@ while running:
                 collision1 = True
                 break
 
-            
+    
     # If no collision occurs, increase the score every second
     if not collision1:
         time_since_last_score_increase += clock.get_time()  # Track the time since last score increase
