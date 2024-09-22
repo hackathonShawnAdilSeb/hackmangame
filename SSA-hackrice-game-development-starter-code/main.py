@@ -276,7 +276,7 @@ clock = pygame.time.Clock()
 running = True
 
 # Instantiate an enemy object (can add more enemies as needed)
-num_of_enemies = 5
+num_of_enemies = (level * 5)
 spawncamp=[]
 for i in range(num_of_enemies):
     spawncamp.append(Enemy())
@@ -290,8 +290,8 @@ player_hitbox = pygame.Rect(
     player_hitbox_size
 )
 
-tree_hitbox_reduction_height = 40
-tree_hitbox_reduction_width = 75
+tree_hitbox_reduction_height = 60
+tree_hitbox_reduction_width = 90
 tree_hitbox_size = (tree_size[0] - tree_hitbox_reduction_width, tree_size[1] - tree_hitbox_reduction_height)
 tree_hitbox = pygame.Rect(
     tree_rect.x + tree_hitbox_reduction_width // 2,  # Offset the hitbox to the center
@@ -371,11 +371,14 @@ def update_player_movement():
     # Update and return the player's rectangle for further processing (like collision detection)
     return pygame.Rect(player_x, player_y, player_size, player_size), player_hitbox
 
+
+
 # Function to reset the game state (score, enemy and player position)
 def reset_game():
-    global player_x, player_y, score, enemy, mud_rect, mud_mask, tree_rect, tree_mask
+    global player_x, player_y, score, enemy, mud_rect, mud_mask, tree_rect, tree_mask, tree_hitbox
     player_x = width // 2  # Reset player position to the center of the screen
     player_y = height // 2
+    num_of_enemies = level * 5
     spawncamp.clear()
     for i in range(num_of_enemies):
         spawncamp.append(Enemy())
@@ -386,6 +389,30 @@ def reset_game():
     mud_mask = pygame.mask.from_surface(mud_image)
     tree_rect = spawn_tree_randomly(mud_rect)
     tree_mask = pygame.mask.from_surface(tree_image)
+
+    while True:
+        player_x = random.randint(0, width - player_size)
+        player_y = random.randint(0, height - player_size)
+        player_rect = pygame.Rect(player_x, player_y, player_size, player_size)
+
+        # Check collisions with mud and tree
+        if not player_rect.colliderect(mud_rect) and not player_rect.colliderect(tree_rect):
+            break  # Exit the loop if the position is valid
+
+    # Update the player's hitbox after positioning
+    player_hitbox = pygame.Rect(
+        player_x + hitbox_reduction // 2,
+        player_y + hitbox_reduction // 2,
+        player_hitbox_size,
+        player_hitbox_size
+    )
+
+    tree_hitbox = pygame.Rect(
+        tree_rect.x + tree_hitbox_reduction_width // 2,  # Offset the hitbox to the center
+        tree_rect.y + tree_hitbox_reduction_height // 2,  
+        tree_hitbox_size[0], 
+        tree_hitbox_size[1]
+    )
 
 
 # Function to display "You Died" message and a countdown to restart
@@ -403,7 +430,11 @@ def display_you_died_and_restart(screen):
 def display_score(screen, score):
     score_text = font.render(f'Score: {score}', True, (255, 255, 255))
     screen.blit(score_text, (10, 10))  # Display score in the top-left corner
-    
+
+def display_level(screen, level):
+    level_text = font.render(f'Level: {level}', True, (255, 255, 255))
+    screen.blit(level_text, (10, 40))
+
 # Define player's initial position at the center of the screen
 player_x = width // 2
 player_y = height // 2
@@ -428,6 +459,7 @@ def display_score_and_level(screen, score, level):
 
 ### Main Game Loop ###
 while running:
+
     keys = pygame.key.get_pressed()
     # Event handling
     for event in pygame.event.get():
@@ -451,6 +483,7 @@ while running:
     for i in range(num_of_enemies):
         spawncamp[i].move_towards_player(player_rect)
         spawncamp[i].move_away_from_other_enemies(spawncamp)
+
     #enemy.move_towards_player(player_rect)
     #enemy2.move_towards_player(player_rect)
     # Check for collision between player and enemy
@@ -471,12 +504,20 @@ while running:
     screen.blit(background, (0,0))
     
     # Draw stuff on the screen
-    screen.blit(mud_image, mud_rect)
-    screen.blit(player_image, player_rect)
-    screen.blit(tree_image, tree_rect)
+    if level >2:
+        screen.blit(mud_image, mud_rect)
+        screen.blit(player_image, player_rect)
+        screen.blit(tree_image, tree_rect)
+    elif level > 1:
+        screen.blit(player_image, player_rect)
+        screen.blit(tree_image, tree_rect)
+    else:
+        screen.blit(player_image, player_rect)
+
     
     # Draw the enemy on the screen
     for i in range(num_of_enemies):
+        num_of_enemies = level * 5
         spawncamp[i].draw(screen)
     #enemy.draw(screen)
     #enemy2.draw(screen)
@@ -541,6 +582,7 @@ while running:
 
     # Display the current score
     display_score(screen, score)
+    display_level(screen, level)
 
     if bullet_state is "fire":
         screen.blit(bullet_image, (bullet_x, bullet_y))
