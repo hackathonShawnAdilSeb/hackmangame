@@ -97,10 +97,31 @@ enemy_image = pygame.transform.scale(enemy_image, (enemy_size, enemy_size))
 # Get the rectangle for the player image
 player_rect = player_image.get_rect()
 
+
+
+def spawn_mud_randomly():
+    max_x = width - mud_size[0]  # Maximum x-coordinate (screen width - mud width)
+    max_y = height - mud_size[1]  # Maximum y-coordinate (screen height - mud height)
+    
+    random_x = random.randint(0, max_x)
+    random_y = random.randint(0, max_y)
+    
+    return pygame.Rect(random_x, random_y, mud_size[0], mud_size[1])
+
+
 #mud
+mud_size = (100, 100)  # Set new size for the mud (width, height)
 mud_image = pygame.image.load(os.path.join('mud3.png')).convert_alpha()
+mud_image = pygame.transform.scale(mud_image, mud_size)
 mud_mask = pygame.mask.from_surface(mud_image)
-mud_rect = mud_image.get_rect(topleft=(200, 300))
+mud_rect = spawn_mud_randomly()
+
+#tree
+tree_size = (100, 100)
+tree_image = pygame.image.load(os.path.join('tree.png')).convert_alpha()
+tree_image = pygame.mask.from_surface(tree_image)
+tree_mask = pygame.mask.from_surface(tree_image)
+tree_rect = spawn_tree_randomly()
 
 def create_player_mask(player_image, player_size, player_x, player_y):
 
@@ -129,11 +150,11 @@ def main_menu():
     
     menu_background = pygame.image.load('customgrass.png')
 
-    title_font = pygame.font.Font(None, 50)
-    button_font = pygame.font.Font(None, 50)
+    title_font = pygame.font.SysFont("chalkboard", 50)
+    button_font = pygame.font.SysFont("chalkboard", 50)
     
    
-    start_button_rect = pygame.Rect(width // 2 - button_width // 2, height // 2 - 100, button_width, button_height)
+    start_button_rect = pygame.Rect(width // 2 - button_width // 2, height // 2 - 80, button_width, button_height)
     quit_button_rect = pygame.Rect(width // 2 - button_width // 2, height // 2 + button_padding, button_width, button_height)
 
     while True:
@@ -141,7 +162,7 @@ def main_menu():
         screen.blit(menu_background, (0, 0))
         
         
-        draw_text("WELCOME TO GOATBUSTERS", title_font, (255, 255, 255), screen, width // 2, 140)
+        draw_text("WELCOME TO GOATBUSTERS", title_font, (255, 255, 255), screen, width // 2, 155)
 
         
         mouse_pos = pygame.mouse.get_pos()
@@ -165,7 +186,7 @@ def main_menu():
             pygame.draw.rect(screen, button_color, quit_button_rect)
 
         
-        draw_text("Start Game", button_font, (0, 0, 0), screen, width // 2, height // 2 - 60)
+        draw_text("Start Game", button_font, (0, 0, 0), screen, width // 2, height // 2 - 40)
         draw_text("Quit", button_font, (0, 0, 0), screen, width // 2, height // 2 + 60)
 
         
@@ -179,6 +200,7 @@ def main_menu():
         
 main_menu()
 
+mud_rect = spawn_mud_randomly()
 
 # Enemy Class to handle enemies ###
 class Enemy:
@@ -265,14 +287,35 @@ def fire_bullet(x,y):
 def update_player_movement():
     global player_x
     global player_y
+    global player_image
     # Get the state of all keyboard buttons
     keys = pygame.key.get_pressed()
     
     # Update player's x and y coordinates based on key presses
     if keys[pygame.K_a]:  # Move left (A)
         player_x -= player_speed
+        if not in_mud:
+            player_image = pygame.transform.scale(
+                    pygame.image.load(os.path.join('goat.png')).convert_alpha(),
+                    (player_size, player_size)
+                )
+        else:
+            player_image = pygame.transform.scale(
+                pygame.image.load(os.path.join('mud_goat.png')).convert_alpha(),
+                (player_size, player_size)
+            )
     if keys[pygame.K_d]:  # Move right (D)
         player_x += player_speed
+        if not in_mud:
+            player_image = pygame.transform.scale(
+                    pygame.image.load(os.path.join('goatR.png')).convert_alpha(),
+                    (player_size, player_size)
+                )
+        else: 
+            player_image = pygame.transform.scale(
+                pygame.image.load(os.path.join('mud_goatR.png')).convert_alpha(),
+                (player_size, player_size)
+            )
     if keys[pygame.K_w]:  # Move up (W)
         player_y -= player_speed
     if keys[pygame.K_s]:  # Move down (S)
@@ -296,7 +339,7 @@ def update_player_movement():
 
 # Function to reset the game state (score, enemy and player position)
 def reset_game():
-    global player_x, player_y, enemy, score
+    global player_x, player_y, score, mud_rect, mud_mask
     player_x = width // 2  # Reset player position to the center of the screen
     player_y = height // 2
     spawncamp.clear()
@@ -304,6 +347,9 @@ def reset_game():
         spawncamp.append(Enemy())
    
     score = 0  # Reset score
+
+    mud_rect = spawn_mud_randomly()
+    mud_mask = pygame.mask.from_surface(mud_image)
 
 
 # Function to display "You Died" message and a countdown to restart
